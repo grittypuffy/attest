@@ -43,7 +43,7 @@ const app = new Elysia()
 			return await createAgencyHandler({ store: { state }, body, cookie: { token } });
 		}
   )
-	.listen(3000);
+	.listen(8000);
 
 console.log(
 	`Elysia is running at http://${app.server?.hostname}:${app.server?.port}`,
