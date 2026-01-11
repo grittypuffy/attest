@@ -10,7 +10,7 @@ export const signUpHandler = async ({ store, body }: any) => {
   const existingUser = await userCollection.findOne({
     email: signUpData.email,
   });
-  if (existingUser) return { error: "User already exists" };
+  if (existingUser) return { error: "User already exists", "data": null, "message": "User already exists", "success": false };
 
   const salt = await bcrypt.genSalt(10);
   const passwordHash = await bcrypt.hash(signUpData.password, salt);
@@ -44,7 +44,7 @@ export const signInHandler = async ({
   const user = await userCollection.findOne({ email });
   if (!user) return { error: "Invalid username or password" };
   const isPasswordValid = await bcrypt.compare(password, user.password);
-  if (!isPasswordValid) return { error: "Invalid username or password" };
+  if (!isPasswordValid) return { error: "Invalid username or password", "data": null, "message": "User already exists", "success": false };
 
   const jwtToken = jwt.sign(
     { id: user._id.toString(), email: user.email, role: user.role },
