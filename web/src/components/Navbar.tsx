@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
+import ConnectWallet from "./ConnectWallet";
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -63,21 +64,24 @@ export default function Navbar() {
               </Link>
             ))}
           </div>
-          {isAuthenticated ? (
-            <button
-              onClick={handleLogout}
-              className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 transition-colors shadow-sm cursor-pointer"
-            >
-              Logout
-            </button>
-          ) : (
-            <Link
-              href="/auth"
-              className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors shadow-sm"
-            >
-              Sign In
-            </Link>
-          )}
+          <div className="flex items-center gap-4">
+            <ConnectWallet />
+            {isAuthenticated ? (
+              <button
+                onClick={handleLogout}
+                className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 transition-colors shadow-sm cursor-pointer"
+              >
+                Logout
+              </button>
+            ) : (
+              <Link
+                href="/auth"
+                className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors shadow-sm"
+              >
+                Sign In
+              </Link>
+            )}
+          </div>
         </div>
       </div>
     </nav>

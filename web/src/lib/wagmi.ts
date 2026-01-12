@@ -1,11 +1,13 @@
 import { http, createConfig } from "wagmi";
 import { injected } from "wagmi/connectors";
-import { localhost } from "wagmi/chains";
+import { foundry } from "wagmi/chains";
 
 export const config = createConfig({
-  chains: [localhost],
+  chains: [foundry],
   connectors: [injected()],
   transports: {
-    [localhost.id]: http('http://127.0.0.1:8545'),
+    [foundry.id]: http(
+      typeof window !== "undefined" ? "/rpc" : "http://127.0.0.1:8545",
+    ),
   },
 });

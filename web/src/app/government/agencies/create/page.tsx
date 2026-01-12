@@ -70,8 +70,29 @@ export default function CreateAgencyPage() {
 
       console.log("Transaction sent:", hash);
 
-      // 2. Database record
-      const { data, error: apiError } = await api.government.agency.create.post(formData);
+      // 2. Database record - Using explicit fetch to debug NetworkError
+      const response = await fetch("/api/government/agency/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify(formData),
+      });
+
+      let data;
+      let apiError = null;
+
+      if (response.ok) {
+        data = await response.json();
+      } else {
+         try {
+            const errData = await response.json();
+            apiError = { value: errData.error || errData.message || "Request failed" };
+         } catch (e) {
+            apiError = { value: `Request failed with status ${response.status}` };
+         }
+      }
 
       if (apiError) {
         setError(apiError.value ? String(apiError.value) : "Failed to create agency in database");

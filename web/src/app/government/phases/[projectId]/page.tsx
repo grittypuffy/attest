@@ -2,7 +2,7 @@
 
 import { useState, useEffect, use } from "react";
 import { api } from "@/lib/api";
-import { CheckCircle, Clock, Money, FileSearch } from "@phosphor-icons/react/dist/ssr";
+import { CheckCircle, Clock, Money, MagnifyingGlass } from "@phosphor-icons/react/dist/ssr";
 import { useRouter } from "next/navigation";
 import { useWalletClient, useAccount, useSwitchChain } from "wagmi";
 import { ATTEST_MANAGER_ADDRESS, ACTIVE_CHAIN_ID } from "@/lib/constants";
@@ -168,7 +168,7 @@ export default function ProjectPhasesPage({ params }: { params: Promise<{ projec
 
               <div className="flex justify-between items-center pt-4 border-t border-gray-100">
                 <button className="flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700">
-                  <FileSearch size={18} />
+                  <MagnifyingGlass size={18} />
                   Review Evidence/Proofs
                 </button>
 
