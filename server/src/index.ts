@@ -1,4 +1,4 @@
-import { Elysia } from "elysia";
+import { Elysia, t } from "elysia";
 import { cors } from "@elysiajs/cors";
 import { openapi, fromTypes } from "@elysiajs/openapi";
 import { MongoClient, type Db } from "mongodb";
@@ -7,6 +7,8 @@ import { getAuthUserHandler, getUserHandler, signInHandler, signUpHandler, verif
 import { createAgencyHandler } from "./routes/government";
 import { verify } from "jsonwebtoken";
 import { createProjectHandler, getProjectHandler } from "./routes/project";
+import { SignInRequest, SignUpRequest } from "./models/auth";
+import { CreateProjectRequest } from "./models/project";
 
 const client = new MongoClient(process.env.MONGODB_URI || "");
 const jwtSecret = process.env.JWT_SECRET || "";
@@ -23,7 +25,9 @@ const state: AppState = {
 };
 
 const app = new Elysia()
-	.use(openapi())
+	.use(openapi({
+		references: fromTypes()
+	}))
 	.use(
 		cors({
 			origin: process.env.FRONTEND_URL,
@@ -40,7 +44,9 @@ const app = new Elysia()
 		"/auth/sign_in",
 		async ({ store: { state }, body, cookie: { token } }) => {
 			return await signInHandler({ store: { state }, body, cookie: { token } });
-		},
+		}, {
+			body: SignInRequest
+		}
 	)
 	.get(
 		"/auth/user",
@@ -59,6 +65,10 @@ const app = new Elysia()
 		"/user/:user_id",
 		async ({ store: {state}, params: {user_id}}) => {
 			return await getUserHandler({store: {state}, params: {user_id}})
+		}, {
+			params: t.Object({
+				user_id: t.String()
+			})
 		}
 	)
 	// Government
@@ -70,19 +80,27 @@ const app = new Elysia()
 				body,
 				cookie: { token },
 			});
-		},
+		}, {
+			body: SignUpRequest
+		}
 	)
 	// Project
 	.post(
 		"/project/create",
 		async ({store: {state}, body, cookie: {token}}) => {
 			return await createProjectHandler({store: {state}, body, cookie: {token}});
+		}, {
+			body: CreateProjectRequest
 		}
 	)
 	.get(
 		"/project/:project_id",
 		async ({store: {state}}) => {
 			return await getProjectHandler({store: {state}})
+		}, {
+			params: t.Object({
+				project_id: t.String()
+			})
 		}
 	)
 	.listen(8000);
