@@ -1,4 +1,4 @@
-type UserRole = "Government" | "Agent" 
+type UserRole = "Government" | "Agency" 
 
 interface User {
   id: string;
