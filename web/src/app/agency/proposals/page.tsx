@@ -1,5 +1,6 @@
 "use client";
 
+import AgencyProposalView from "@components/agency/AgencyProposalView";
 import {
   Avatar,
   Box,
@@ -9,7 +10,6 @@ import {
   Typography,
 } from "@mui/material";
 import Link from "next/link";
-import AgencyProposalView from "./components/AgencyProposalView";
 
 type Props = {
   params: Promise<{ id: string }>;

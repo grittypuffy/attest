@@ -1,6 +1,6 @@
-import { Grid } from "@mui/material";
 import type { Agency } from "@/lib/types/agency";
-import { AgencyCard } from "./AgencyCard";
+import { AgencyCard } from "@components/agency/AgencyCard";
+import { Grid } from "@mui/material";
 
 type Props = {
   agencies: Agency[];

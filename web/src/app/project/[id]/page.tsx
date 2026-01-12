@@ -2,6 +2,7 @@
 
 import { api } from "@/lib/api";
 import { Project, Proposal } from "@/lib/types";
+import Editor from "@components/Editor";
 import {
   Box,
   Button,
@@ -17,15 +18,12 @@ import {
   ArrowLeft,
   Buildings,
   CheckCircle,
+  CurrencyInrIcon,
   FileText,
   ListBullets,
   PencilLine
 } from "@phosphor-icons/react";
-import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
-
-// Dynamically import Editor to avoid SSR issues with window object
-const Editor = dynamic(() => import("@/app/agency/proposals/components/Editor"), { ssr: false });
 
 export default function ProjectPage({
   params,
@@ -666,7 +664,10 @@ const ProposalDetailsView = ({
                       Total Budget
                     </Typography>
                     <Typography variant="body1" color="text.secondary">
-                      ${proposal.total_budget?.toLocaleString() || "N/A"}
+                      <span
+                        className="inline-flex gap-1">
+                        <CurrencyInrIcon /> {proposal.total_budget?.toLocaleString() || "N/A"}
+                      </span>
                     </Typography>
                   </div>
 

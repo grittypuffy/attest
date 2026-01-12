@@ -1,25 +1,31 @@
 "use client";
 
+import { api } from "@/lib/api";
+import type { Proposal } from "@/lib/types";
 import {
   Box,
-  Divider,
+  Chip,
+  Grid,
   List,
   ListItemButton,
   ListItemText,
   Paper,
-  Typography,
-  Tabs,
   Tab,
-  Grid,
+  Tabs,
   TextField,
-  Chip,
+  Typography
 } from "@mui/material";
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
-import type { Proposal } from "@/lib/types/proposal";
-import { api } from "@/lib/api";
 
-const Editor = dynamic(() => import("./Editor"), { ssr: false });
+// Extended Proposal type with additional fields for hydration
+interface ExtendedProposal extends Proposal {
+  project_name: string;
+  project_description: string;
+  proposal_description: any;
+}
+
+const Editor = dynamic(() => import("@components/agency/ProposalEditor"), { ssr: false });
 
 export const toEditorDoc = (input: any) => {
   if (!input)
@@ -41,9 +47,9 @@ export const toEditorDoc = (input: any) => {
 };
 
 export default function AgencyProposalView() {
-  const [selectedProposal, setSelectedProposal] = useState<Proposal | null>(null);
+  const [selectedProposal, setSelectedProposal] = useState<ExtendedProposal | null>(null);
   const [tab, setTab] = useState(0);
-  const [proposals, setProposals] = useState<Proposal[]>([]);
+  const [proposals, setProposals] = useState<ExtendedProposal[]>([]);
 
   useEffect(() => {
     const load = async () => {
@@ -51,6 +57,7 @@ export default function AgencyProposalView() {
       if (!userRes.data?.success) return;
 
       const agencyId = userRes.data.data?.id;
+      if (!agencyId) return;
 
       const proposalsRes = await api.agency({ agency_id: agencyId }).proposals.get();
       if (!proposalsRes.data?.success) return;
@@ -64,8 +71,8 @@ export default function AgencyProposalView() {
             ...p,
             project_name: project?.project_name || "Unknown",
             project_description: project?.description || "",
-            proposal_description: toEditorDoc(p.description)
-          };
+            proposal_description: toEditorDoc((p as any).description)
+          } as unknown as ExtendedProposal;
         })
       );
 
@@ -119,84 +126,84 @@ export default function AgencyProposalView() {
 
             {/* Content */}
             <Box p={3}>
-            {tab === 0 && (
-              <Grid container spacing={2}>
-                <Grid item xs={12}>
-                  <TextField
-                    label="Project"
-                    value={selectedProposal.project_name}
-                    fullWidth
-                    InputProps={{ readOnly: true }}
-                  />
+              {tab === 0 && (
+                <Grid container spacing={2}>
+                  <Grid size={12}>
+                    <TextField
+                      label="Project"
+                      value={selectedProposal.project_name}
+                      fullWidth
+                      InputProps={{ readOnly: true }}
+                    />
+                  </Grid>
+
+                  <Grid size={12}>
+                    <TextField
+                      label="Project Description"
+                      value={selectedProposal.project_description}
+                      multiline
+                      fullWidth
+                      InputProps={{ readOnly: true }}
+                    />
+                  </Grid>
+
+                  <Grid size={6}>
+                    <TextField
+                      label="Timeline"
+                      value={selectedProposal.timeline}
+                      fullWidth
+                      InputProps={{ readOnly: true }}
+                    />
+                  </Grid>
+
+                  <Grid size={6}>
+                    <TextField
+                      label="Budget"
+                      value={`₹${selectedProposal.total_budget.toLocaleString()}`}
+                      fullWidth
+                      InputProps={{ readOnly: true }}
+                    />
+                  </Grid>
+
+                  <Grid size={12}>
+                    <TextField
+                      label="Summary"
+                      value={selectedProposal.summary}
+                      multiline
+                      fullWidth
+                      InputProps={{ readOnly: true }}
+                    />
+                  </Grid>
+
+                  <Grid size={6}>
+                    <TextField
+                      label="No of Phases"
+                      value={selectedProposal.no_of_phases}
+                      fullWidth
+                      InputProps={{ readOnly: true }}
+                    />
+                  </Grid>
+
+                  <Grid size={6}>
+                    <TextField
+                      label="Outcome"
+                      value={selectedProposal.outcome}
+                      fullWidth
+                      InputProps={{ readOnly: true }}
+                    />
+
+                  </Grid>
+
                 </Grid>
+              )}
 
-                <Grid item xs={12}>
-                  <TextField
-                    label="Project Description"
-                    value={selectedProposal.project_description}
-                    multiline
-                    fullWidth
-                    InputProps={{ readOnly: true }}
-                  />
-                </Grid>
-
-                <Grid item xs={6}>
-                  <TextField
-                    label="Timeline"
-                    value={selectedProposal.timeline}
-                    fullWidth
-                    InputProps={{ readOnly: true }}
-                  />
-                </Grid>
-
-                <Grid item xs={6}>
-                  <TextField
-                    label="Budget"
-                    value={`₹${selectedProposal.total_budget.toLocaleString()}`}
-                    fullWidth
-                    InputProps={{ readOnly: true }}
-                  />
-                </Grid>
-
-                <Grid item xs={12}>
-                  <TextField
-                    label="Summary"
-                    value={selectedProposal.summary}
-                    multiline
-                    fullWidth
-                    InputProps={{ readOnly: true }}
-                  />
-                </Grid>
-
-                <Grid item xs={6}>
-                  <TextField
-                    label="No of Phases"
-                    value={selectedProposal.no_of_phases}
-                    fullWidth
-                    InputProps={{ readOnly: true }}
-                  />
-                </Grid>
-
-                <Grid item xs={6}>
-                  <TextField
-                    label="Outcome"
-                    value={selectedProposal.outcome}
-                    fullWidth
-                    InputProps={{ readOnly: true }}
-                  />
-
-                </Grid>
-
-              </Grid>
-            )}
-
-            {tab === 1 && (
-              <Editor
-                data={
-                  selectedProposal.proposal_description
-                }
-              />
-            )}
+              {tab === 1 && (
+                <Editor
+                  data={
+                    selectedProposal.proposal_description
+                  }
+                />
+              )}
             </Box>
           </>
         ) : (
