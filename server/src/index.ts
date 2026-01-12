@@ -17,8 +17,10 @@ import {
 } from "./routes/auth";
 import { createAgencyHandler } from "./routes/government";
 import {
+	acceptProjectPhaseHandler,
 	acceptProjectProposalHandler,
 	createProjectHandler,
+	getAllProjectsHandler,
 	getProjectHandler,
 	getProjectProposalsHandler,
 	registerProjectProposalHandler,
@@ -134,6 +136,9 @@ const app = new Elysia()
 					body: CreateProjectRequest,
 				},
 			)
+			.get("/all", async ({ store: { state } }) => {
+				return await getAllProjectsHandler({ store: { state } });
+			})
 			.get(
 				"/:project_id",
 				async ({ store: { state } }) => {
@@ -163,7 +168,7 @@ const app = new Elysia()
 				},
 			)
 			.post(
-				"/:project_id/proposal/:proposal_id/phases/register",
+				"/:project_id/proposal/:proposal_id/phase/register",
 				async ({
 					store,
 					cookie: { token },
@@ -213,6 +218,22 @@ const app = new Elysia()
 					params: t.Object({
 						project_id: t.String(),
 					}),
+				},
+			)
+			.post(
+				"/:project_id/proposal/:proposal_id/phase/accept",
+				async ({
+					store,
+					cookie: { token },
+					params: { project_id, proposal_id },
+					body,
+				}) => {
+					return await acceptProjectPhaseHandler({
+						store,
+						cookie: { token },
+						params: { project_id, proposal_id },
+						body,
+					});
 				},
 			),
 	)
