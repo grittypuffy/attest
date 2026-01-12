@@ -10,4 +10,3 @@ export type Proposal = {
   status: boolean;
   content?: any;
 };
-

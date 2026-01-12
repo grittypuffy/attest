@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { MagnifyingGlass, Funnel } from "@phosphor-icons/react/dist/ssr";
+import { Funnel, MagnifyingGlass } from "@phosphor-icons/react/dist/ssr";
+import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 
 type ProjectStatus = "PROPOSAL" | "ACTIVE" | "COMPLETED";
@@ -20,7 +20,9 @@ interface Project {
 
 export default function ProjectsPage() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterStatus, setFilterStatus] = useState<ProjectStatus | "ALL">("ALL");
+  const [filterStatus, setFilterStatus] = useState<ProjectStatus | "ALL">(
+    "ALL",
+  );
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -29,16 +31,16 @@ export default function ProjectsPage() {
       try {
         const { data, error } = await api.project.all.get();
         if (data && !error && data.data) {
-           // Transform the API data to match the UI needs, mocking missing fields
-           const mappedProjects: Project[] = data.data.map((p: any) => ({
-             ...p,
-             department: "Government", // Placeholder
-             status: "ACTIVE", // Placeholder
-             budget: "TBD", // Placeholder
-             date: new Date().toISOString().split('T')[0], // Placeholder
-             location: "National", // Placeholder
-           }));
-           setProjects(mappedProjects);
+          // Transform the API data to match the UI needs, mocking missing fields
+          const mappedProjects: Project[] = data.data.map((p: any) => ({
+            ...p,
+            department: "Government", // Placeholder
+            status: "ACTIVE", // Placeholder
+            budget: "TBD", // Placeholder
+            date: new Date().toISOString().split("T")[0], // Placeholder
+            location: "National", // Placeholder
+          }));
+          setProjects(mappedProjects);
         }
       } catch (err) {
         console.error("Failed to fetch projects", err);
@@ -51,9 +53,13 @@ export default function ProjectsPage() {
   }, []);
 
   const filteredProjects = projects.filter((project) => {
-    const matchesSearch = project.project_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          (project.department || "").toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = filterStatus === "ALL" || project.status === filterStatus;
+    const matchesSearch =
+      project.project_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (project.department || "")
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase());
+    const matchesStatus =
+      filterStatus === "ALL" || project.status === filterStatus;
     return matchesSearch && matchesStatus;
   });
 
@@ -62,9 +68,11 @@ export default function ProjectsPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Public Projects</h1>
-          <p className="text-gray-500 mt-1">Browse government initiatives and proposals.</p>
+          <p className="text-gray-500 mt-1">
+            Browse government initiatives and proposals.
+          </p>
         </div>
-        
+
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
@@ -78,15 +86,17 @@ export default function ProjectsPage() {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          
+
           <div className="relative">
-             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
               <Funnel size={20} />
             </div>
             <select
               className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white w-full sm:w-auto appearance-none"
               value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value as ProjectStatus | "ALL")}
+              onChange={(e) =>
+                setFilterStatus(e.target.value as ProjectStatus | "ALL")
+              }
             >
               <option value="ALL">All Statuses</option>
               <option value="PROPOSAL">Proposals</option>
@@ -104,29 +114,42 @@ export default function ProjectsPage() {
       ) : (
         <div className="grid gap-6">
           {filteredProjects.map((project) => (
-            <div key={project.project_id} className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow">
+            <div
+              key={project.project_id}
+              className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow"
+            >
               <div className="flex flex-col md:flex-row justify-between md:items-start gap-4 mb-4">
                 <div>
                   <div className="flex items-center gap-3 mb-2">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      project.status === 'PROPOSAL' ? 'bg-purple-100 text-purple-800' :
-                      project.status === 'ACTIVE' ? 'bg-green-100 text-green-800' :
-                      'bg-gray-100 text-gray-800'
-                    }`}>
+                    <span
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        project.status === "PROPOSAL"
+                          ? "bg-purple-100 text-purple-800"
+                          : project.status === "ACTIVE"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-gray-100 text-gray-800"
+                      }`}
+                    >
                       {project.status}
                     </span>
-                    <span className="text-sm text-gray-500">{project.department}</span>
+                    <span className="text-sm text-gray-500">
+                      {project.department}
+                    </span>
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-900">{project.project_name}</h3>
+                  <h3 className="text-xl font-semibold text-gray-900">
+                    {project.project_name}
+                  </h3>
                 </div>
                 <div className="text-right md:text-left">
-                  <div className="text-2xl font-bold text-gray-900">{project.budget}</div>
+                  <div className="text-2xl font-bold text-gray-900">
+                    {project.budget}
+                  </div>
                   <div className="text-sm text-gray-500">Budget</div>
                 </div>
               </div>
-              
+
               <p className="text-gray-600 mb-4">{project.description}</p>
-              
+
               <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 border-t border-gray-100 pt-4 mt-2">
                 <div className="flex items-center gap-1">
                   <span>📍 {project.location}</span>
@@ -140,7 +163,9 @@ export default function ProjectsPage() {
 
           {filteredProjects.length === 0 && (
             <div className="text-center py-12 bg-white rounded-xl border border-dashed border-gray-300">
-              <p className="text-gray-500">No projects found matching your criteria.</p>
+              <p className="text-gray-500">
+                No projects found matching your criteria.
+              </p>
             </div>
           )}
         </div>
