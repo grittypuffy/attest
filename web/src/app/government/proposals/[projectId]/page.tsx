@@ -4,11 +4,15 @@ import { useState, useEffect, use } from "react";
 import { api } from "@/lib/api";
 import { CheckCircle, XCircle, Clock } from "@phosphor-icons/react/dist/ssr";
 import { useRouter } from "next/navigation";
+import { useWalletClient, useAccount, useSwitchChain } from "wagmi";
+import { ATTEST_MANAGER_ADDRESS, ACTIVE_CHAIN_ID } from "@/lib/constants";
+import AttestManagerABI from "@/abi/AttestManager.json";
+import { encodeFunctionData, parseGwei } from "viem";
 
 interface Proposal {
   proposal_id: string;
   proposal_name: string;
-  agency_id: string; // ID for now, maybe fetch agency name if possible
+  agency_id: string;
   total_budget: number;
   timeline: string;
   summary?: string;
@@ -17,19 +21,21 @@ interface Proposal {
 }
 
 export default function ProjectProposalsPage({ params }: { params: Promise<{ projectId: string }> }) {
-  // Unwrap params using React.use()
   const { projectId } = use(params);
-  
   const [proposals, setProposals] = useState<Proposal[]>([]);
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
   const router = useRouter();
 
+  const { chainId, address: userAddress } = useAccount();
+  const { switchChain } = useSwitchChain();
+  const { data: walletClient } = useWalletClient();
+
   const fetchProposals = async () => {
     try {
       const { data, error } = await api.project({ project_id: projectId }).proposal.all.get();
       if (data && !error && data.data) {
-         setProposals(data.data as any); // Type cast due to potential mismatch or missing types
+         setProposals(data.data as any);
       }
     } catch (err) {
       console.error("Failed to fetch proposals", err);
@@ -45,23 +51,49 @@ export default function ProjectProposalsPage({ params }: { params: Promise<{ pro
   }, [projectId]);
 
   const handleApprove = async (proposalId: string) => {
-    if (!confirm("Are you sure you want to approve this proposal? This will reject all other proposals for this project.")) return;
+    if (!walletClient) return alert("Wallet not connected");
+    if (!confirm("Are you sure you want to approve this proposal? This will update the blockchain and the database.")) return;
     
     setProcessingId(proposalId);
     try {
-      const { data, error } = await api.project({ project_id: projectId }).proposal.accept.post({
+      // 0. Network Check
+      if (chainId !== ACTIVE_CHAIN_ID) {
+        switchChain({ chainId: ACTIVE_CHAIN_ID });
+        return;
+      }
+
+      // 1. On-Chain Transaction (Bypass Simulation)
+      const encodedData = encodeFunctionData({
+        abi: AttestManagerABI.abi,
+        functionName: "approveProposal",
+        args: [BigInt(proposalId)], // Contract expects uint256
+      });
+
+      const hash = await walletClient.sendTransaction({
+        account: userAddress,
+        to: ATTEST_MANAGER_ADDRESS as `0x${string}`,
+        data: encodedData,
+        gas: BigInt(300000),
+        gasPrice: parseGwei("25"),
+        type: "legacy",
+      });
+
+      console.log("On-chain approval sent:", hash);
+
+      // 2. Database update
+      const { data } = await api.project({ project_id: projectId }).proposal.accept.post({
         proposal_id: proposalId
       });
 
       if (data && data.success) {
-        alert("Proposal approved successfully!");
-        fetchProposals(); // Refresh list to update statuses
+        alert("Proposal approved on-chain and in database!");
+        fetchProposals();
       } else {
-        alert("Failed to approve proposal: " + (data?.message || error?.value || "Unknown error"));
+        alert("Transaction sent, but database failed to update.");
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert("An error occurred.");
+      alert(err.shortMessage || err.message || "An error occurred.");
     } finally {
       setProcessingId(null);
     }
@@ -97,7 +129,7 @@ export default function ProjectProposalsPage({ params }: { params: Promise<{ pro
                       {proposal.status === 'Pending' && <Clock weight="fill" />}
                       {proposal.status}
                     </span>
-                    <span className="text-sm text-gray-500">Agency ID: {proposal.agency_id}</span>
+                    <span className="text-sm text-gray-500">Agency Wallet ID: {proposal.agency_id}</span>
                   </div>
                   <h3 className="text-xl font-bold text-gray-900">{proposal.proposal_name}</h3>
                 </div>
@@ -114,14 +146,12 @@ export default function ProjectProposalsPage({ params }: { params: Promise<{ pro
                 </div>
                  <div>
                   <span className="font-semibold block text-gray-900">Outcome:</span>
-                  {/* Assuming outcome field exists based on model, otherwise description */}
-                   {/* proposal.outcome */} N/A 
+                  Proposal Review
                 </div>
               </div>
 
               <div className="mt-4">
                 <p className="text-gray-700">{proposal.description}</p>
-                {proposal.summary && <p className="text-gray-500 mt-2 text-sm italic">{proposal.summary}</p>}
               </div>
 
               {proposal.status === 'Pending' && (
@@ -131,7 +161,7 @@ export default function ProjectProposalsPage({ params }: { params: Promise<{ pro
                     disabled={!!processingId}
                     className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50"
                   >
-                    {processingId === proposal.proposal_id ? "Processing..." : "Approve Proposal"}
+                    {processingId === proposal.proposal_id ? "Confirming On-Chain..." : "Approve Proposal"}
                   </button>
                 </div>
               )}

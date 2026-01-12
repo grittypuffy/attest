@@ -10,13 +10,14 @@ import {
 } from "@mui/material";
 import Link from "next/link";
 import AgencyProposalView from "./components/AgencyProposalView";
+import { use } from "react";
 
 type Props = {
   params: Promise<{ id: string }>;
 };
 
-export default async function AgencyDetailsPage({ params }: Props) {
-  const { id } = await params;
+export default function AgencyDetailsPage({ params }: Props) {
+  const { id } = use(params);
 
   // In a real app, we would fetch the agency details using the ID here.
   // const agency = await getAgency(id);
