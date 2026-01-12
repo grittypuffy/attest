@@ -170,6 +170,7 @@ export const registerProposalPhasesHandler = async ({
 				end_date: proposalPhaseData.end_date,
 				validating_documents: proposalPhaseData.validating_documents || null,
 				freeze_funds: true,
+				status: "Not Started",
 			}),
 		);
 		const result = await phaseCollection.insertMany(phaseDocs);
@@ -209,17 +210,17 @@ export const getProjectProposalsHandler = async ({
 		})
 		.toArray();
 	const proposalMeta = proposals.map(async (proposal) => {
-    const phases = await phaseCollection
-        .find({
-            proposal_id: { $in: [proposal._id] }
-        })
-        .toArray();
+		const phases = await phaseCollection
+			.find({
+				proposal_id: { $in: [proposal._id] },
+			})
+			.toArray();
 		return {
 			...proposal,
 			agency_id: proposal.agency_id.toString(),
 			proposal_id: proposal._id.toString(),
 			project_id: proposal.project_id.toString(),
-			phases: phases
+			phases: phases,
 		};
 	});
 

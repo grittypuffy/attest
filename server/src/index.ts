@@ -1,8 +1,14 @@
-import { Elysia, t } from "elysia";
 import { cors } from "@elysiajs/cors";
-import { openapi, fromTypes } from "@elysiajs/openapi";
+import { fromTypes, openapi } from "@elysiajs/openapi";
+import { Elysia, t } from "elysia";
 import { MongoClient, type Db } from "mongodb";
 import type AppState from "./config";
+import { SignInRequest, SignUpRequest } from "./models/auth";
+import {
+	CreateProjectPhasesRequest,
+	CreateProjectProposalRequest,
+	CreateProjectRequest,
+} from "./models/project";
 import {
 	getAuthUserHandler,
 	getUserHandler,
@@ -18,12 +24,6 @@ import {
 	registerProjectProposalHandler,
 	registerProposalPhasesHandler,
 } from "./routes/project";
-import { SignInRequest, SignUpRequest } from "./models/auth";
-import {
-	CreateProjectPhasesRequest,
-	CreateProjectProposalRequest,
-	CreateProjectRequest,
-} from "./models/project";
 
 const client = new MongoClient(process.env.MONGODB_URI || "");
 const jwtSecret = process.env.JWT_SECRET || "";
@@ -176,13 +176,14 @@ const app = new Elysia()
 						params: { project_id, proposal_id },
 						body,
 					});
-				}, {
+				},
+				{
 					params: t.Object({
 						project_id: t.String(),
-						proposal_id: t.String()
+						proposal_id: t.String(),
 					}),
-					body: CreateProjectPhasesRequest
-				}
+					body: CreateProjectPhasesRequest,
+				},
 			)
 			.get(
 				"/:project_id/proposal/all",
@@ -220,3 +221,5 @@ const app = new Elysia()
 console.log(
 	`Elysia is running at http://${app.server?.hostname}:${app.server?.port}`,
 );
+
+export type App = typeof app;
