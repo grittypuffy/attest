@@ -170,6 +170,7 @@ export const registerProposalPhasesHandler = async ({
 				end_date: proposalPhaseData.end_date,
 				validating_documents: proposalPhaseData.validating_documents || null,
 				freeze_funds: true,
+				status: "Not Started"
 			}),
 		);
 		const result = await phaseCollection.insertMany(phaseDocs);
