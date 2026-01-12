@@ -12,7 +12,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body className="app-container bg-gray-100 h-screen">{children}</body>
     </html>
   );
 }
