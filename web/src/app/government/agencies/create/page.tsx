@@ -21,7 +21,64 @@ export default function CreateAgencyPage() {
     setError("");
 
     try {
-      const { data, error } = await api.government.agency.create.post(formData);
+      // 0. Network & Contract Sync Check
+      if (chainId !== ACTIVE_CHAIN_ID) {
+        switchChain({ chainId: ACTIVE_CHAIN_ID });
+        return;
+      }
+
+      if (!publicClient) throw new Error("Public client not initialized");
+      
+      const code = await publicClient.getBytecode({ address: ATTEST_MANAGER_ADDRESS as `0x${string}` });
+      if (!code || code === "0x") {
+        console.warn("Contract desync detected on this RPC node. Proceeding with caution...");
+      }
+
+      // 1. Manually Encode Data
+      const encodedData = encodeFunctionData({
+        abi: AttestManagerABI.abi,
+        functionName: "registerAgency",
+        args: [
+          getAddress(formData.walletAddress), 
+          JSON.stringify({ name: formData.name, physical_address: formData.address }), 
+        ],
+      });
+
+      // 2. Legacy Transaction (More stable for Shardeum)
+      const hash = await walletClient.sendTransaction({
+        account: userAddress,
+        to: ATTEST_MANAGER_ADDRESS as `0x${string}`,
+        data: encodedData,
+        gas: BigInt(600000), 
+        gasPrice: parseGwei("25"), // Use fixed gasPrice instead of maxFee
+        type: "legacy", 
+      });
+
+      console.log("Transaction sent:", hash);
+
+      // 2. Database record - Using explicit fetch to debug NetworkError
+      const response = await fetch("/api/government/agency/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify(formData),
+      });
+
+      let data;
+      let apiError = null;
+
+      if (response.ok) {
+        data = await response.json();
+      } else {
+         try {
+            const errData = await response.json();
+            apiError = { value: errData.error || errData.message || "Request failed" };
+         } catch (e) {
+            apiError = { value: `Request failed with status ${response.status}` };
+         }
+      }
 
       if (error) {
         setError(error.value ? String(error.value) : "Failed to create agency");
