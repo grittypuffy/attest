@@ -7,14 +7,15 @@ import {
 	getAuthUserHandler,
 	getUserHandler,
 	signInHandler,
-	signUpHandler,
 	verifySessionHandler,
 } from "./routes/auth";
 import { createAgencyHandler } from "./routes/government";
-import { verify } from "jsonwebtoken";
-import { createProjectHandler, getProjectHandler } from "./routes/project";
+import { createProjectHandler, getProjectHandler, registerProjectProposalHandler } from "./routes/project";
 import { SignInRequest, SignUpRequest } from "./models/auth";
-import { CreateProjectRequest } from "./models/project";
+import {
+	CreateProjectProposalRequest,
+	CreateProjectRequest,
+} from "./models/project";
 
 const client = new MongoClient(process.env.MONGODB_URI || "");
 const jwtSecret = process.env.JWT_SECRET || "";
@@ -22,11 +23,13 @@ await client.connect();
 const db: Db = client.db(process.env.MONGODB_DB_NAME);
 const userCollection = db.collection("user");
 const projectCollection = db.collection("project");
+const proposalCollection = db.collection("proposal");
 
 const state: AppState = {
 	db: db,
 	userCollection: userCollection,
 	projectCollection: projectCollection,
+	proposalCollection: proposalCollection,
 	jwtSecret: jwtSecret,
 };
 
@@ -131,6 +134,22 @@ const app = new Elysia()
 						project_id: t.String(),
 					}),
 				},
+			)
+			.post(
+				"/:project_id/proposal/register",
+				async ({ store, cookie: { token }, params: { project_id }, body }) => {
+					return await registerProjectProposalHandler({
+						store,
+						cookie: { token },
+						params: { project_id },
+						body,
+					});
+				}, {
+					body: CreateProjectProposalRequest,
+					params: t.Object({
+						project_id: t.String()
+					})
+				}
 			),
 	)
 	.listen(8000);

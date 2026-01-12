@@ -4,5 +4,6 @@ export default interface AppState {
     db: Db,
     userCollection: Collection,
     projectCollection: Collection,
+    proposalCollection: Collection,
     jwtSecret: string
 }
