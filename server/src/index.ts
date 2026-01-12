@@ -13,6 +13,7 @@ import {
 	getAuthUserHandler,
 	getUserHandler,
 	signInHandler,
+	signOutHandler,
 	verifySessionHandler,
 } from "./routes/auth";
 import { createAgencyHandler } from "./routes/government";
@@ -96,7 +97,10 @@ const app = new Elysia()
 						cookie: { token },
 					});
 				},
-			),
+			)
+			.post("/sign_out", async ({ cookie: { token } }) => {
+				return await signOutHandler({ cookie: { token } });
+			}),
 	)
 	// User
 	.get(

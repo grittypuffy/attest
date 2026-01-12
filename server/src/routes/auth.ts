@@ -152,3 +152,13 @@ export const verifySessionHandler = async ({
 		};
 	}
 };
+
+export const signOutHandler = async ({ cookie: { token } }: any) => {
+	token.remove();
+	return {
+		success: true,
+		data: null,
+		error: null,
+		message: "Signed out successfully",
+	};
+};
