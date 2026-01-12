@@ -35,14 +35,14 @@ export const SignInForm = () => {
   const router = useRouter();
   
   useEffect(() => {
-    if (response?.type === "success") {
+    if (!isPending && response?.type === "success") {
       if (response.role === "Government") {
         router.push("/government");
       } else {
         router.push("/agency");
       }
     }
-  }, [response]);
+  }, [response, isPending, router]);
 
   return (
     <form action={action} className="space-y-6">

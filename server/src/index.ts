@@ -81,11 +81,12 @@ const app = new Elysia()
 		app
 			.post(
 				"/sign_in",
-				async ({ store: { state }, body, cookie: { token } }) => {
+				async ({ store: { state }, body, cookie: { token }, set }) => {
 					return await signInHandler({
 						store: { state },
 						body,
 						cookie: { token },
+						set,
 					});
 				},
 				{

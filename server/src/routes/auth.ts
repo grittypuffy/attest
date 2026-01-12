@@ -8,6 +8,7 @@ export const signInHandler = async ({
 	store,
 	body,
 	cookie: { token },
+	set,
 }: any) => {
 	const { email, password } = body;
 
@@ -33,10 +34,17 @@ export const signInHandler = async ({
 	token.value = jwtToken;
 	token.httpOnly = true;
 	token.path = "/";
-	token.set({
-		secure: process.env.NODE_ENV === "production",
-		maxAge: 60 * 60 * 24 * 7,
-	});
+	set.cookie = {
+		...set.cookie,
+		token: {
+			value: jwtToken,
+			secure: process.env.NODE_ENV === "production",
+			maxAge: 60 * 60 * 24 * 7,
+			httpOnly: true,
+			path: "/",
+			sameSite: "lax",
+		},
+	};
 
 	return {
 		success: true,
