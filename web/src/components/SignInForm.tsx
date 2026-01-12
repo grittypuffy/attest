@@ -1,104 +1,101 @@
 "use client";
 
 import { api } from "@/lib/api";
+import { EyeClosed, Eye } from "@phosphor-icons/react/dist/ssr";
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
-import { useAccount, useConnect, useSignMessage, useDisconnect } from "wagmi";
-import { injected } from "wagmi/connectors";
+import { useActionState, useEffect, useState } from "react";
 
 export const SignInForm = () => {
-  const router = useRouter();
-  const { address, isConnected } = useAccount();
-  const { connect } = useConnect();
-  const { disconnect } = useDisconnect();
-  const { signMessageAsync } = useSignMessage();
-  
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [response, action, isPending] = useActionState(
+    async (prevState: any, queryData: any) => {
+      const email: string = queryData.get("email");
+      const password: string = queryData.get("password");
 
-  const handleSignIn = async () => {
-    if (!isConnected || !address) return;
-    
-    setLoading(true);
-    setError("");
-
-    try {
-      // 1. Get nonce
-      const { data: nonceData, error: nonceError } = await api.auth.nonce.get();
-      if (nonceError || !nonceData?.success) {
-        console.error("Nonce Error Details:", nonceError);
-        console.log("Nonce Data:", nonceData);
-        throw new Error("Failed to get login nonce. Check console for details.");
-      }
-      const nonce = nonceData.data.nonce;
-
-      // 2. Sign message
-      const message = `Sign in to Attest with your wallet. Nonce: ${nonce}`;
-      const signature = await signMessageAsync({ message });
-
-      // 3. Verify on backend
-      const { data: verifyData, error: verifyError } = await api.auth.verify.post({
-        address,
-        signature,
-        nonce
+      const res = await api.auth.sign_in.post({
+        email,
+        password,
       });
 
-      if (verifyError || !verifyData?.success || !verifyData?.data) {
-        throw new Error(verifyData?.message || "Verification failed");
+      if (res.data?.error) {
+        return {
+          type: "error",
+          message: res.data.error,
+        };
       }
+      return {
+        type: "success",
+        message: "Signed in successfully",
+        role: res.data?.data?.role,
+      };
+    },
+    null,
+  );
 
-      // 4. Redirect based on role
-      const role = verifyData.data.role;
-      if (role === "Government") {
+  const [showPwd, setShowPwd] = useState<boolean>(false);
+  const router = useRouter();
+  
+  useEffect(() => {
+    if (response?.type === "success") {
+      if (response.role === "Government") {
         router.push("/government");
       } else {
         router.push("/agency");
       }
-    } catch (err: any) {
-      console.error(err);
-      setError(err.message || "An error occurred during sign in");
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [response]);
 
   return (
-    <div className="space-y-6">
-      {!isConnected ? (
-        <button
-          onClick={() => connect({ connector: injected() })}
-          className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-        >
-          Connect Wallet
-        </button>
-      ) : (
-        <div className="space-y-4">
-          <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
-            <p className="text-xs text-gray-500 mb-1">Connected Wallet</p>
-            <p className="text-sm font-mono text-gray-900 break-all">{address}</p>
-            <button 
-              onClick={() => disconnect()}
-              className="text-xs text-red-600 hover:underline mt-2"
-            >
-              Disconnect
-            </button>
-          </div>
+    <form action={action} className="space-y-6">
+      <div>
+        <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+          Email Address
+        </label>
+        <input
+          id="email"
+          name="email"
+          type="email"
+          required
+          placeholder="you@example.com"
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+        />
+      </div>
 
+      <div>
+        <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+          Password
+        </label>
+        <div className="relative">
+          <input
+            id="password"
+            name="password"
+            type={showPwd ? "text" : "password"}
+            required
+            placeholder="••••••••"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all pr-12"
+          />
           <button
-            onClick={handleSignIn}
-            disabled={loading}
-            className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 transition-colors"
+            type="button"
+            onClick={() => setShowPwd(!showPwd)}
+            className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none"
           >
-            {loading ? "Verifying..." : "Sign In with Wallet"}
+            {showPwd ? <Eye size={20} /> : <EyeClosed size={20} />}
           </button>
         </div>
-      )}
+      </div>
 
-      {error && (
-        <div className="p-4 bg-red-50 border border-red-100 rounded-lg text-sm text-red-600 flex items-center">
-           ⚠️ {error}
+      <button
+        type="submit"
+        disabled={isPending}
+        className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+      >
+        {isPending ? "Signing In..." : "Sign In"}
+      </button>
+
+      {response && response.type === "error" && (
+        <div className="p-4 bg-red-50 border border-red-100 rounded-lg text-sm text-red-600 flex items-center animate-pulse">
+           ⚠️ {response.message}
         </div>
       )}
-    </div>
+    </form>
   );
 };

@@ -1,5 +1,6 @@
 "use client";
 
+import type { Proposal } from "@/lib/types";
 import {
   Box,
   Divider,
@@ -11,7 +12,6 @@ import {
 } from "@mui/material";
 import dynamic from "next/dynamic";
 import { useState } from "react";
-import type { Proposal } from "@/lib/types";
 
 // Dynamically import Editor to avoid SSR issues with window object
 const Editor = dynamic(() => import("./Editor"), { ssr: false });
@@ -19,15 +19,16 @@ const Editor = dynamic(() => import("./Editor"), { ssr: false });
 const MOCK_PROPOSALS: Proposal[] = [
   {
     proposal_id: "1",
-    name: "Urban Park Renovation",
+    proposal_name: "Urban Park Renovation",
+    project_id: "proj-1",
+    agency_id: "agency-1",
     total_budget: 500000,
     timeline: "2024-01-01",
-    executing_agency: "1",
     summary: "Renovation of the central city park.",
-    meta: {},
-    phases: 3,
-    status: true,
-    content: {
+    no_of_phases: 3,
+    outcome: "A revitalized urban park with improved facilities and green spaces.",
+    status: "Pending",
+    description: JSON.stringify({
       time: 1642603957790,
       blocks: [
         {
@@ -54,19 +55,20 @@ const MOCK_PROPOSALS: Proposal[] = [
         },
       ],
       version: "2.22.2",
-    },
+    }),
   },
   {
     proposal_id: "2",
-    name: "Smart Traffic Lights",
+    proposal_name: "Smart Traffic Lights",
+    project_id: "proj-2",
+    agency_id: "agency-1",
     total_budget: 1200000,
     timeline: "2024-03-15",
-    executing_agency: "1",
     summary: "Installation of AI-powered traffic lights.",
-    meta: {},
-    phases: 2,
-    status: true,
-    content: {
+    no_of_phases: 2,
+    outcome: "Reduced traffic congestion and improved air quality through intelligent traffic management.",
+    status: "Pending",
+    description: JSON.stringify({
       time: 1642604000000,
       blocks: [
         {
@@ -86,7 +88,7 @@ const MOCK_PROPOSALS: Proposal[] = [
         },
       ],
       version: "2.22.2",
-    },
+    }),
   },
 ];
 
@@ -94,6 +96,15 @@ export default function AgencyProposalView() {
   const [selectedProposal, setSelectedProposal] = useState<Proposal | null>(
     null,
   );
+
+  // Parse description as EditorJS data
+  const parseDescription = (description: string) => {
+    try {
+      return JSON.parse(description);
+    } catch {
+      return { time: Date.now(), blocks: [] };
+    }
+  };
 
   return (
     <Box sx={{ display: "flex", gap: 3, height: "100%", mt: 1 }}>
@@ -116,7 +127,7 @@ export default function AgencyProposalView() {
               sx={{ borderRadius: 1, mb: 0.5 }}
             >
               <ListItemText
-                primary={proposal.name}
+                primary={proposal.proposal_name}
                 primaryTypographyProps={{ fontWeight: 500 }}
               />
             </ListItemButton>
@@ -149,7 +160,7 @@ export default function AgencyProposalView() {
               }}
             >
               <Typography variant="h4" gutterBottom fontWeight={700}>
-                {selectedProposal.name}
+                {selectedProposal.proposal_name}
               </Typography>
               <Typography
                 variant="subtitle1"
@@ -162,9 +173,7 @@ export default function AgencyProposalView() {
               <Divider sx={{ my: 2 }} />
               <Box className="editor-js-content">
                 <Editor
-                  data={
-                    selectedProposal.content || { time: Date.now(), blocks: [] }
-                  }
+                  data={parseDescription(selectedProposal.description)}
                 />
               </Box>
             </Box>

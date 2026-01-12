@@ -36,14 +36,13 @@ export const createAgencyHandler = async ({
 			};
 
 		const salt = await bcrypt.genSalt(10);
-		const passwordHash = signUpData.password ? await bcrypt.hash(signUpData.password, salt) : null;
+		const passwordHash = await bcrypt.hash(signUpData.password, salt);
 
 		const _result = await userCollection.insertOne({
 			email: signUpData.email,
 			password: passwordHash,
 			name: signUpData.name,
 			address: signUpData.address,
-			walletAddress: signUpData.walletAddress.toLowerCase(),
 			role: "Agency",
 		});
 

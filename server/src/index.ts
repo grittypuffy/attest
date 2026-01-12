@@ -12,12 +12,10 @@ import {
 } from "./models/project";
 import {
 	getAuthUserHandler,
-	getNonceHandler,
 	getUserHandler,
 	signInHandler,
 	signOutHandler,
 	verifySessionHandler,
-	verifySignatureHandler,
 } from "./routes/auth";
 import { createAgencyHandler } from "./routes/government";
 import {
@@ -78,16 +76,6 @@ const app = new Elysia()
 	// Auth
 	.group("/auth", (app) =>
 		app
-			.get("/nonce", async () => {
-				return await getNonceHandler();
-			})
-			.post("/verify", async ({ store: { state }, body, cookie: { token } }) => {
-				return await verifySignatureHandler({
-					store: { state },
-					body,
-					cookie: { token },
-				});
-			})
 			.post(
 				"/sign_in",
 				async ({ store: { state }, body, cookie: { token } }) => {

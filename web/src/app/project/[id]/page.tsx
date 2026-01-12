@@ -1,11 +1,8 @@
 "use client";
 
 import { api } from "@/lib/api";
-import { Phase, Project } from "@/lib/types";
+import { Project, Proposal } from "@/lib/types";
 import {
-  Accordion,
-  AccordionDetails,
-  AccordionSummary,
   Box,
   Button,
   Card,
@@ -19,16 +16,16 @@ import {
 import {
   ArrowLeft,
   Buildings,
-  CaretDown,
   CheckCircle,
-  Clock,
   FileText,
   ListBullets,
   PencilLine
 } from "@phosphor-icons/react";
+import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 
-type Proposal = Phase;
+// Dynamically import Editor to avoid SSR issues with window object
+const Editor = dynamic(() => import("@/app/agency/proposals/components/Editor"), { ssr: false });
 
 export default function ProjectPage({
   params,
@@ -36,7 +33,7 @@ export default function ProjectPage({
   params: Promise<{ id: string }>;
 }) {
   const [project, setProject] = useState<Project | null>(null);
-  const [proposals, setProposals] = useState<Proposal[]>([]);
+  const [proposals, setProposals] = useState<Proposal[] | null>([]);
   const [selectedProposal, setSelectedProposal] = useState<Proposal | null>(
     null
   );
@@ -483,10 +480,6 @@ const ProposalCard = ({
   proposal: Proposal;
   onClick: () => void;
 }) => {
-  const phaseCount = Array.isArray(proposal.phases)
-    ? proposal.phases.length
-    : 0;
-
   return (
     <Card
       sx={{
@@ -515,7 +508,7 @@ const ProposalCard = ({
           </div>
 
           <Typography variant="h6" component="h3" className="font-semibold mb-2">
-            Proposal #{proposal.proposal_id.slice(0, 8)}
+            Proposal #{proposal.proposal_name.slice(0, 8)}
           </Typography>
 
           <div className="flex items-center gap-2 mb-3">
@@ -527,10 +520,6 @@ const ProposalCard = ({
 
           <div className="mt-auto pt-4 border-t border-gray-100">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-600 flex items-center gap-1">
-                <Clock size={16} />
-                {phaseCount} {phaseCount === 1 ? "Phase" : "Phases"}
-              </span>
               <span className="text-blue-600 font-medium">View Details →</span>
             </div>
           </div>
@@ -547,14 +536,23 @@ const ProposalDetailsView = ({
   proposal: Proposal;
   onBack: () => void;
 }) => {
-  const [expandedPhase, setExpandedPhase] = useState<string | false>(false);
+  const [selectedTab, setSelectedTab] = useState(0);
 
-  const handleAccordionChange =
-    (panel: string) => (_event: React.SyntheticEvent, isExpanded: boolean) => {
-      setExpandedPhase(isExpanded ? panel : false);
-    };
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
+    setSelectedTab(newValue);
+  };
 
-  const phases = Array.isArray(proposal.phases) ? proposal.phases : [];
+  // Parse description as EditorJS data or fallback to empty blocks
+  const parseDescription = () => {
+    try {
+      if (typeof proposal.description === 'string') {
+        return JSON.parse(proposal.description);
+      }
+      return proposal.description || { time: Date.now(), blocks: [] };
+    } catch {
+      return { time: Date.now(), blocks: [{ type: "paragraph", data: { text: proposal.description || "" } }] };
+    }
+  };
 
   return (
     <div>
@@ -601,139 +599,128 @@ const ProposalDetailsView = ({
         </div>
       </div>
 
-      {/* Phases Section */}
-      <div>
-        <h3 className="text-xl font-bold mb-4 text-gray-900">
-          Proposal Phases ({phases.length})
-        </h3>
+      {/* Vertical Tabs */}
+      <Box sx={{ display: "flex", gap: 3 }}>
+        {/* Tabs Navigation */}
+        <Tabs
+          orientation="vertical"
+          value={selectedTab}
+          onChange={handleTabChange}
+          sx={{
+            borderRight: 1,
+            borderColor: "divider",
+            minWidth: 180,
+            "& .MuiTab-root": {
+              alignItems: "flex-start",
+              textAlign: "left",
+              textTransform: "none",
+              fontSize: "0.95rem",
+              fontWeight: 500,
+            },
+          }}
+        >
+          <Tab label="Details" />
+          <Tab label="Description" />
+        </Tabs>
 
-        {phases.length === 0 ? (
-          <div className="text-center py-8 bg-gray-50 rounded-lg">
-            <FileText size={48} className="mx-auto text-gray-300 mb-3" />
-            <p className="text-gray-500">No phases defined for this proposal</p>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {phases.map((phase: any, index: number) => (
-              <Accordion
-                key={phase.phase_id || index}
-                expanded={expandedPhase === `phase${index}`}
-                onChange={handleAccordionChange(`phase${index}`)}
-                sx={{
-                  "&:before": { display: "none" },
-                  boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
-                  borderRadius: "8px !important",
-                  mb: 1,
-                }}
-              >
-                <AccordionSummary
-                  expandIcon={<CaretDown size={20} />}
-                  sx={{
-                    "& .MuiAccordionSummary-content": {
-                      my: 1.5,
-                    },
-                  }}
-                >
-                  <div className="flex items-center gap-3 w-full">
-                    <Chip
-                      label={`Phase ${index + 1}`}
-                      size="small"
-                      color="primary"
-                      variant="outlined"
-                    />
-                    <Typography variant="subtitle1" className="font-semibold">
-                      {phase.phase_name || phase.name || `Phase ${index + 1}`}
+        {/* Tab Content */}
+        <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+          {/* Details Tab */}
+          {selectedTab === 0 && (
+            <Box>
+              <Typography variant="h6" className="font-bold mb-4 text-gray-900">
+                Proposal Information
+              </Typography>
+
+              <div className="space-y-4">
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <Typography variant="subtitle2" className="font-semibold mb-1 text-gray-700">
+                    Proposal Name
+                  </Typography>
+                  <Typography variant="body1" color="text.secondary">
+                    {proposal.proposal_name}
+                  </Typography>
+                </div>
+
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <Typography variant="subtitle2" className="font-semibold mb-1 text-gray-700">
+                    Summary
+                  </Typography>
+                  <Typography variant="body1" color="text.secondary">
+                    {proposal.summary}
+                  </Typography>
+                </div>
+
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <Typography variant="subtitle2" className="font-semibold mb-1 text-gray-700">
+                    Outcome
+                  </Typography>
+                  <Typography variant="body1" color="text.secondary">
+                    {proposal.outcome}
+                  </Typography>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <Typography variant="subtitle2" className="font-semibold mb-1 text-gray-700">
+                      Total Budget
+                    </Typography>
+                    <Typography variant="body1" color="text.secondary">
+                      ${proposal.total_budget?.toLocaleString() || "N/A"}
                     </Typography>
                   </div>
-                </AccordionSummary>
-                <AccordionDetails>
-                  <Box className="space-y-3">
-                    {phase.description && (
-                      <div>
-                        <Typography
-                          variant="subtitle2"
-                          className="font-semibold mb-1 text-gray-700"
-                        >
-                          Description
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          {phase.description}
-                        </Typography>
-                      </div>
-                    )}
 
-                    {phase.duration && (
-                      <div>
-                        <Typography
-                          variant="subtitle2"
-                          className="font-semibold mb-1 text-gray-700"
-                        >
-                          Duration
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          {phase.duration}
-                        </Typography>
-                      </div>
-                    )}
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <Typography variant="subtitle2" className="font-semibold mb-1 text-gray-700">
+                      Number of Phases
+                    </Typography>
+                    <Typography variant="body1" color="text.secondary">
+                      {proposal.no_of_phases || "N/A"}
+                    </Typography>
+                  </div>
+                </div>
 
-                    {phase.budget && (
-                      <div>
-                        <Typography
-                          variant="subtitle2"
-                          className="font-semibold mb-1 text-gray-700"
-                        >
-                          Budget
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          ${phase.budget.toLocaleString()}
-                        </Typography>
-                      </div>
-                    )}
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <Typography variant="subtitle2" className="font-semibold mb-1 text-gray-700">
+                    Timeline
+                  </Typography>
+                  <Typography variant="body1" color="text.secondary">
+                    {proposal.timeline}
+                  </Typography>
+                </div>
 
-                    {phase.status && (
-                      <div>
-                        <Typography
-                          variant="subtitle2"
-                          className="font-semibold mb-1 text-gray-700"
-                        >
-                          Status
-                        </Typography>
-                        <Chip
-                          label={phase.status}
-                          size="small"
-                          color={
-                            phase.status === "completed"
-                              ? "success"
-                              : phase.status === "in_progress"
-                                ? "warning"
-                                : "default"
-                          }
-                        />
-                      </div>
-                    )}
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <Typography variant="subtitle2" className="font-semibold mb-1 text-gray-700">
+                    Status
+                  </Typography>
+                  <Chip
+                    label={proposal.status || "Pending"}
+                    color={
+                      proposal.status === "Accepted"
+                        ? "success"
+                        : proposal.status === "Not Accepted"
+                          ? "error"
+                          : "warning"
+                    }
+                  />
+                </div>
+              </div>
+            </Box>
+          )}
 
-                    {/* Fallback if phase is just a simple object */}
-                    {!phase.description &&
-                      !phase.duration &&
-                      !phase.budget &&
-                      !phase.status && (
-                        <div className="bg-gray-50 rounded p-3">
-                          <Typography
-                            variant="body2"
-                            component="pre"
-                            className="whitespace-pre-wrap font-mono text-xs"
-                          >
-                            {JSON.stringify(phase, null, 2)}
-                          </Typography>
-                        </div>
-                      )}
-                  </Box>
-                </AccordionDetails>
-              </Accordion>
-            ))}
-          </div>
-        )}
-      </div>
+          {/* Description Tab */}
+          {selectedTab === 1 && (
+            <Box>
+              <Typography variant="h6" className="font-bold mb-4 text-gray-900">
+                Proposal Description
+              </Typography>
+              <Box className="bg-white rounded-lg border border-gray-200 p-6">
+                <Editor data={parseDescription()} />
+              </Box>
+            </Box>
+          )}
+        </Box>
+      </Box>
     </div>
   );
 };
