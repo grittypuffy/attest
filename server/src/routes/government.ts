@@ -14,14 +14,26 @@ export const createAgencyHandler = async ({
 			email: string;
 			role: string;
 		};
-        if (decoded.role !== "Government") return {error: "Not found", data: null, success: false, message: "Not found"}
+		if (decoded.role !== "Government")
+			return {
+				error: "Not found",
+				data: null,
+				success: false,
+				message: "Not found",
+			};
 		const signUpData = body as typeof SignUpRequest;
 		const userCollection = store.state.userCollection;
 
 		const existingUser = await userCollection.findOne({
 			email: signUpData.email,
 		});
-		if (existingUser) return { error: "Agency already exists", success: false, message: "Failed to create agency", data: null };
+		if (existingUser)
+			return {
+				error: "Agency already exists",
+				success: false,
+				message: "Failed to create agency",
+				data: null,
+			};
 
 		const salt = await bcrypt.genSalt(10);
 		const passwordHash = await bcrypt.hash(signUpData.password, salt);

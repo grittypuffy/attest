@@ -112,7 +112,12 @@ export const getAuthUserHandler = async ({ store, cookie: { token } }: any) => {
 			message: "Agency created successfully",
 		};
 	} catch (_e) {
-		return { error: "Invalid or expired token", data: null, message: "Invalid session", success: false };
+		return {
+			error: "Invalid or expired token",
+			data: null,
+			message: "Invalid session",
+			success: false,
+		};
 	}
 };
 
@@ -142,7 +147,10 @@ export const getUserHandler = async ({ store, params: { user_id } }: any) => {
 	};
 };
 
-export const verifySessionHandler = async ({ store, cookie: { token } }: any) => {
+export const verifySessionHandler = async ({
+	store,
+	cookie: { token },
+}: any) => {
 	const userCollection: Collection = store.state.userCollection;
 	try {
 		const decoded = jwt.verify(token.value, store.state.jwtSecret) as {
@@ -157,21 +165,25 @@ export const verifySessionHandler = async ({ store, cookie: { token } }: any) =>
 			return {
 				error: "No user found",
 				data: {
-          valid: false
-        },
+					valid: false,
+				},
 				success: false,
 				message: "Failed to get user data",
 			};
 		return {
 			success: true,
 			data: {
-        valid: true
+				valid: true,
 			},
 			error: null,
 			message: "Agency created successfully",
 		};
 	} catch (_e) {
-		return { error: "Invalid or expired token", data: {valid: false}, message: "Invalid session", success: false };
+		return {
+			error: "Invalid or expired token",
+			data: { valid: false },
+			message: "Invalid session",
+			success: false,
+		};
 	}
 };
-
