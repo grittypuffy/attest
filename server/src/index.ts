@@ -22,10 +22,15 @@ import {
 	createProjectHandler,
 	getAllProjectsHandler,
 	getProjectHandler,
+	getProjectProposalHandler,
 	getProjectProposalsHandler,
 	registerProjectProposalHandler,
 	registerProposalPhasesHandler,
 } from "./routes/project";
+import {
+	getAgencyData,
+	getAgencyProjectProposalsHandler,
+} from "./routes/agency";
 
 const client = new MongoClient(process.env.MONGODB_URI || "");
 const jwtSecret = process.env.JWT_SECRET || "";
@@ -53,11 +58,11 @@ const app = new Elysia()
 	)
 	.use(
 		cors({
-			origin: process.env.FRONTEND_URL,
+			origin: true,
 			credentials: true,
-			methods: "*",
-			allowedHeaders: "*",
-			exposeHeaders: "*",
+			methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+			allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
+			exposeHeaders: ["Set-Cookie"],
 			preflight: true,
 		}),
 	)
@@ -167,6 +172,19 @@ const app = new Elysia()
 					}),
 				},
 			)
+			.get(
+				"/proposal/:proposal_id",
+				async ({ store, params: { proposal_id } }) => {
+					return await getProjectProposalHandler({
+						store,
+						params: { proposal_id },
+					});
+				}, {
+					params: t.Object({
+						proposal_id: t.String()
+					})
+				}
+			)
 			.post(
 				"/:project_id/proposal/:proposal_id/phase/register",
 				async ({
@@ -236,6 +254,29 @@ const app = new Elysia()
 					});
 				},
 			),
+	)
+	.group("/agency", (app) =>
+		app
+			.get(
+				"/:agency_id/proposals",
+				async ({ store, params: { agency_id } }) => {
+					return await getAgencyProjectProposalsHandler({
+						store,
+						params: { agency_id },
+					});
+				},
+				{
+					params: t.Object({
+						agency_id: t.String(),
+					}),
+				},
+			)
+			.get("/:agency_id", async ({ store, params: { agency_id } }) => {
+				return await getAgencyData({
+					store,
+					params: { agency_id },
+				});
+			}),
 	)
 	.listen(8000);
 

@@ -215,6 +215,44 @@ export const registerProposalPhasesHandler = async ({
 	}
 };
 
+export const getProjectProposalHandler = async ({
+	store,
+	params: { proposal_id },
+}: any) => {
+	const proposalCollection: Collection = store.state.proposalCollection;
+	const phaseCollection: Collection = store.state.phaseCollection;
+	const proposal = await proposalCollection.findOne({
+		_id: new ObjectId(proposal_id),
+	});
+	if (!proposal)
+		return {
+			success: false,
+			data: null,
+			error: null,
+			message: "Proposal does not exist",
+		};
+	const phases = await phaseCollection
+		.find({
+			proposal_id: { $in: [proposal_id] },
+		})
+		.toArray();
+	const { _id, ...proposalData } = proposal;
+	const proposalDataDoc = {
+		...proposalData,
+		agency_id: proposal.agency_id.toString(),
+		proposal_id: _id.toString(),
+		project_id: proposal.project_id.toString(),
+		phases: phases,
+	};
+
+	return {
+		success: true,
+		data: proposalDataDoc,
+		error: null,
+		message: "Proposals fetched successfully",
+	};
+};
+
 export const getProjectProposalsHandler = async ({
 	store,
 	params: { project_id },
@@ -226,27 +264,30 @@ export const getProjectProposalsHandler = async ({
 			project_id: new ObjectId(project_id),
 		})
 		.toArray();
-	const proposalMeta = proposals.map(async (proposal) => {
-		const phases = await phaseCollection
-			.find({
-				proposal_id: { $in: [proposal._id] },
-			})
-			.toArray();
-		return {
-			...proposal,
-			agency_id: proposal.agency_id.toString(),
-			proposal_id: proposal._id.toString(),
-			project_id: proposal.project_id.toString(),
-			phases: phases,
-		};
-	});
+	const proposalMeta = await Promise.all(
+		proposals.map(async (proposal) => {
+			const phases = await phaseCollection
+				.find({
+					proposal_id: { $in: [proposal._id] },
+				})
+				.toArray();
+			const { _id, ...proposalData } = proposal;
+			return {
+				...proposalData,
+				agency_id: proposal.agency_id.toString(),
+				proposal_id: _id.toString(),
+				project_id: proposal.project_id.toString(),
+				phases: phases,
+			};
+		}),
+	);
 
 	return {
 		success: true,
-		data: proposals.map((proposal) => ({
+		data: proposalMeta.map((proposal) => ({
 			...proposal,
 			agency_id: proposal.agency_id.toString(),
-			proposal_id: proposal._id.toString(),
+			proposal_id: proposal.proposal_id,
 			project_id: proposal.project_id.toString(),
 		})),
 		error: null,

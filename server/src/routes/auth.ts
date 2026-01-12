@@ -34,8 +34,7 @@ export const signInHandler = async ({
 	token.httpOnly = true;
 	token.path = "/";
 	token.set({
-		sameSite: "lax",
-		secure: true,
+		secure: process.env.NODE_ENV === "production",
 		maxAge: 60 * 60 * 24 * 7,
 	});
 
@@ -75,7 +74,7 @@ export const getAuthUserHandler = async ({ store, cookie: { token } }: any) => {
 				address: existingUser.address,
 			},
 			error: null,
-			message: "Agency created successfully",
+			message: "User retrieved successfully",
 		};
 	} catch (_e) {
 		return {
@@ -109,7 +108,7 @@ export const getUserHandler = async ({ store, params: { user_id } }: any) => {
 			address: existingUser.address,
 		},
 		error: null,
-		message: "Agency created successfully",
+		message: "User retrived successfully",
 	};
 };
 
@@ -142,7 +141,7 @@ export const verifySessionHandler = async ({
 				valid: true,
 			},
 			error: null,
-			message: "Agency created successfully",
+			message: "Session validated successfully",
 		};
 	} catch (_e) {
 		return {
