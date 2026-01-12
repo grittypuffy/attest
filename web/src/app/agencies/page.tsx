@@ -1,7 +1,11 @@
 "use client";
 
+import {
+  CheckCircle,
+  MagnifyingGlass,
+  Star,
+} from "@phosphor-icons/react/dist/ssr";
 import { useState } from "react";
-import { MagnifyingGlass, Star, CheckCircle } from "@phosphor-icons/react/dist/ssr";
 
 interface Agency {
   id: string;
@@ -25,7 +29,8 @@ const MOCK_AGENCIES: Agency[] = [
     specialization: ["Infrastructure", "Roads"],
     location: "Metropolis",
     completedProjects: 45,
-    description: "Leading construction firm specializing in large-scale urban infrastructure projects.",
+    description:
+      "Leading construction firm specializing in large-scale urban infrastructure projects.",
   },
   {
     id: "2",
@@ -36,7 +41,8 @@ const MOCK_AGENCIES: Agency[] = [
     specialization: ["Landscaping", "Urban Planning"],
     location: "Downtown",
     completedProjects: 22,
-    description: "Award-winning landscape architecture firm focused on sustainable public spaces.",
+    description:
+      "Award-winning landscape architecture firm focused on sustainable public spaces.",
   },
   {
     id: "3",
@@ -47,7 +53,8 @@ const MOCK_AGENCIES: Agency[] = [
     specialization: ["Smart City", "IT Infrastructure"],
     location: "Tech Park",
     completedProjects: 12,
-    description: "Innovative technology provider for smart city implementations and data management.",
+    description:
+      "Innovative technology provider for smart city implementations and data management.",
   },
   {
     id: "4",
@@ -58,7 +65,8 @@ const MOCK_AGENCIES: Agency[] = [
     specialization: ["Roads", "Maintenance"],
     location: "Westside",
     completedProjects: 150,
-    description: "Specialists in road maintenance, resurfacing, and rapid repair services.",
+    description:
+      "Specialists in road maintenance, resurfacing, and rapid repair services.",
   },
   {
     id: "5",
@@ -69,24 +77,30 @@ const MOCK_AGENCIES: Agency[] = [
     specialization: ["Healthcare", "Buildings"],
     location: "East End",
     completedProjects: 18,
-    description: "Dedicated to constructing state-of-the-art healthcare facilities and hospitals.",
+    description:
+      "Dedicated to constructing state-of-the-art healthcare facilities and hospitals.",
   },
 ];
 
 export default function AgenciesPage() {
   const [searchTerm, setSearchTerm] = useState("");
 
-  const filteredAgencies = MOCK_AGENCIES.filter((agency) =>
-    agency.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    agency.specialization.some(s => s.toLowerCase().includes(searchTerm.toLowerCase()))
+  const filteredAgencies = MOCK_AGENCIES.filter(
+    (agency) =>
+      agency.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      agency.specialization.some((s) =>
+        s.toLowerCase().includes(searchTerm.toLowerCase()),
+      ),
   );
 
   return (
     <div className="py-8">
       <div className="max-w-2xl mx-auto text-center mb-12">
-        <h1 className="text-3xl font-bold text-gray-900 mb-4">Find Accredited Agencies</h1>
+        <h1 className="text-3xl font-bold text-gray-900 mb-4">
+          Find Accredited Agencies
+        </h1>
         <p className="text-gray-600 mb-8">
-          Search for verified agencies to partner with on government projects. 
+          Search for verified agencies to partner with on government projects.
           Check their credentials, ratings, and past performance.
         </p>
 
@@ -106,20 +120,29 @@ export default function AgenciesPage() {
 
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredAgencies.map((agency) => (
-          <div key={agency.id} className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-lg transition-shadow flex flex-col">
+          <div
+            key={agency.id}
+            className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-lg transition-shadow flex flex-col"
+          >
             <div className="flex justify-between items-start mb-4">
-              <h3 className="text-lg font-bold text-gray-900 line-clamp-1">{agency.name}</h3>
+              <h3 className="text-lg font-bold text-gray-900 line-clamp-1">
+                {agency.name}
+              </h3>
               {agency.isAccredited && (
                 <div className="text-blue-600" title="Accredited Agency">
-                   <CheckCircle size={24} weight="fill" />
+                  <CheckCircle size={24} weight="fill" />
                 </div>
               )}
             </div>
 
             <div className="flex items-center mb-4">
               <Star weight="fill" className="text-yellow-400 mr-1" />
-              <span className="font-semibold text-gray-900 mr-1">{agency.rating}</span>
-              <span className="text-sm text-gray-500">({agency.reviewCount} reviews)</span>
+              <span className="font-semibold text-gray-900 mr-1">
+                {agency.rating}
+              </span>
+              <span className="text-sm text-gray-500">
+                ({agency.reviewCount} reviews)
+              </span>
             </div>
 
             <p className="text-gray-600 text-sm mb-4 line-clamp-2 flex-grow">
@@ -128,7 +151,10 @@ export default function AgenciesPage() {
 
             <div className="flex flex-wrap gap-2 mb-4">
               {agency.specialization.map((spec) => (
-                <span key={spec} className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs font-medium">
+                <span
+                  key={spec}
+                  className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs font-medium"
+                >
                   {spec}
                 </span>
               ))}
@@ -136,14 +162,18 @@ export default function AgenciesPage() {
 
             <div className="pt-4 border-t border-gray-100 flex justify-between items-center text-sm">
               <span className="text-gray-500">{agency.location}</span>
-              <span className="font-medium text-gray-900">{agency.completedProjects} Projects</span>
+              <span className="font-medium text-gray-900">
+                {agency.completedProjects} Projects
+              </span>
             </div>
           </div>
         ))}
-        
+
         {filteredAgencies.length === 0 && (
           <div className="col-span-full text-center py-12">
-             <p className="text-gray-500">No agencies found matching "{searchTerm}".</p>
+            <p className="text-gray-500">
+              No agencies found matching "{searchTerm}".
+            </p>
           </div>
         )}
       </div>
