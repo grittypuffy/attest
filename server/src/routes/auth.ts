@@ -74,7 +74,7 @@ export const getAuthUserHandler = async ({ store, cookie: { token } }: any) => {
 				address: existingUser.address,
 			},
 			error: null,
-			message: "Agency created successfully",
+			message: "User retrieved successfully",
 		};
 	} catch (_e) {
 		return {
@@ -108,7 +108,7 @@ export const getUserHandler = async ({ store, params: { user_id } }: any) => {
 			address: existingUser.address,
 		},
 		error: null,
-		message: "Agency created successfully",
+		message: "User retrived successfully",
 	};
 };
 
@@ -141,7 +141,7 @@ export const verifySessionHandler = async ({
 				valid: true,
 			},
 			error: null,
-			message: "Agency created successfully",
+			message: "Session validated successfully",
 		};
 	} catch (_e) {
 		return {
