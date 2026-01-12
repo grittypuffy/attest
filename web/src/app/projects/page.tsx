@@ -1,6 +1,7 @@
 "use client";
 
 import { api } from "@/lib/api";
+import type { User } from "@/lib/types";
 import { ArrowUpRightIcon } from "@phosphor-icons/react";
 import { Funnel, MagnifyingGlass } from "@phosphor-icons/react/dist/ssr";
 import { usePathname, useRouter } from "next/navigation";
@@ -32,7 +33,7 @@ export default function ProjectsPage() {
 
   const pathname = usePathname();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const router = useRouter()
+  const router = useRouter();
 
   useEffect(() => {
     bootstrapAuth();
@@ -161,10 +162,10 @@ export default function ProjectsPage() {
                   <div className="flex items-center gap-3 mb-2">
                     <span
                       className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${project.status === "PROPOSAL"
-                        ? "bg-purple-100 text-purple-800"
-                        : project.status === "ACTIVE"
-                          ? "bg-green-100 text-green-800"
-                          : "bg-gray-100 text-gray-800"
+                          ? "bg-purple-100 text-purple-800"
+                          : project.status === "ACTIVE"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-gray-100 text-gray-800"
                         }`}
                     >
                       {project.status}
@@ -197,7 +198,10 @@ export default function ProjectsPage() {
                   </div>
                 </div>
                 <div>
-                  <a href={`/project/${project.project_id}`} className="text-blue-600 hover:underline">
+                  <a
+                    href={`/project/${project.project_id}`}
+                    className="text-blue-600 hover:underline"
+                  >
                     <span className="inline-flex items-center gap-1">
                       View Details <ArrowUpRightIcon />
                     </span>
@@ -215,7 +219,6 @@ export default function ProjectsPage() {
                   </button>
                 </div>
               )}
-
             </div>
           ))}
 

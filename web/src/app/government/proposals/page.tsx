@@ -20,7 +20,7 @@ export default function ProposalsPage() {
       try {
         const { data, error } = await api.project.all.get();
         if (data && !error && data.data) {
-           setProjects(data.data);
+          setProjects(data.data);
         }
       } catch (err) {
         console.error("Failed to fetch projects", err);
@@ -34,8 +34,12 @@ export default function ProposalsPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Review Proposals</h1>
-      <p className="text-gray-600 mb-8">Select a project to review submitted proposals from agencies.</p>
+      <h1 className="text-2xl font-bold text-gray-900 mb-6">
+        Review Proposals
+      </h1>
+      <p className="text-gray-600 mb-8">
+        Select a project to review submitted proposals from agencies.
+      </p>
 
       {loading ? (
         <div className="flex justify-center py-12">
@@ -44,8 +48,8 @@ export default function ProposalsPage() {
       ) : (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {projects.map((project) => (
-            <Link 
-              key={project.project_id} 
+            <Link
+              key={project.project_id}
               href={`/government/proposals/${project.project_id}`}
               className="block group"
             >

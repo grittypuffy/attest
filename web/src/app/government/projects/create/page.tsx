@@ -22,7 +22,9 @@ export default function CreateProjectPage() {
       const { data, error } = await api.project.create.post(formData);
 
       if (error) {
-        setError(error.value ? String(error.value) : "Failed to create project");
+        setError(
+          error.value ? String(error.value) : "Failed to create project",
+        );
       } else if (data && data.success) {
         router.push("/government");
       } else {
@@ -38,12 +40,17 @@ export default function CreateProjectPage() {
 
   return (
     <div className="max-w-6xl">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Create New Project</h1>
+      <h1 className="text-2xl font-bold text-gray-900 mb-6">
+        Create New Project
+      </h1>
 
       <div className="bg-white p-8 rounded-xl border border-gray-200 shadow-sm">
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label htmlFor="project_name" className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="project_name"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Project Name
             </label>
             <input
@@ -52,12 +59,17 @@ export default function CreateProjectPage() {
               required
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
               value={formData.project_name}
-              onChange={(e) => setFormData({ ...formData, project_name: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, project_name: e.target.value })
+              }
             />
           </div>
 
           <div>
-            <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="description"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Description
             </label>
             <textarea
@@ -66,7 +78,9 @@ export default function CreateProjectPage() {
               rows={5}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
               value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, description: e.target.value })
+              }
             />
           </div>
 

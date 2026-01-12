@@ -33,7 +33,7 @@ export const SignInForm = () => {
 
   const [showPwd, setShowPwd] = useState<boolean>(false);
   const router = useRouter();
-  
+
   useEffect(() => {
     if (!isPending && response?.type === "success") {
       if (response.role === "Government") {
@@ -47,7 +47,10 @@ export const SignInForm = () => {
   return (
     <form action={action} className="space-y-6">
       <div>
-        <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+        <label
+          htmlFor="email"
+          className="block text-sm font-medium text-gray-700 mb-1"
+        >
           Email Address
         </label>
         <input
@@ -61,7 +64,10 @@ export const SignInForm = () => {
       </div>
 
       <div>
-        <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+        <label
+          htmlFor="password"
+          className="block text-sm font-medium text-gray-700 mb-1"
+        >
           Password
         </label>
         <div className="relative">
@@ -93,7 +99,7 @@ export const SignInForm = () => {
 
       {response && response.type === "error" && (
         <div className="p-4 bg-red-50 border border-red-100 rounded-lg text-sm text-red-600 flex items-center animate-pulse">
-           ⚠️ {response.message}
+          ⚠️ {response.message}
         </div>
       )}
     </form>

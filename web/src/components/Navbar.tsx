@@ -4,7 +4,6 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import { api } from "@/lib/api";
 
-
 export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
@@ -78,7 +77,7 @@ export default function Navbar() {
     if (!user) return [];
 
     const baseRoute = user.role === "Agency" ? "/agency" : "/government";
-    
+
     return [
       {
         name: "Dashboard",
