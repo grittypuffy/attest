@@ -34,8 +34,7 @@ export const signInHandler = async ({
 	token.httpOnly = true;
 	token.path = "/";
 	token.set({
-		sameSite: "lax",
-		secure: true,
+		secure: process.env.NODE_ENV === "production",
 		maxAge: 60 * 60 * 24 * 7,
 	});
 
