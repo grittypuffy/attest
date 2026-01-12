@@ -10,6 +10,7 @@ import {
 	CreateProjectRequest,
 } from "../models/project";
 import { Collection, ObjectId } from "mongodb";
+import { generateSummary } from "./suggestions";
 
 export const createProjectHandler = async ({
 	store,
@@ -62,7 +63,6 @@ export const getProjectHandler = async ({
 	params: { project_id },
 }: any) => {
 	const projectCollection: Collection = store.state.projectCollection;
-
 	const result = await projectCollection.findOne({
 		_id: new ObjectId(project_id),
 	});
@@ -81,7 +81,7 @@ export const getProjectHandler = async ({
 			description: result.description,
 		},
 		error: null,
-		message: "Agency created successfully",
+		message: "Project fetched successfully",
 	};
 };
 
@@ -135,11 +135,15 @@ export const registerProjectProposalHandler = async ({
 			status: "Pending",
 		};
 		const result = await proposalCollection.insertOne(proposalDoc);
+		const data = {
+				proposal_id: result.insertedId.toString(),
+				...proposalDoc
+			};
+		await generateSummary({store, cookie: {token}, params: {project_id}, data});
+
 		return {
 			success: true,
-			data: {
-				proposal_id: result.insertedId.toString(),
-			},
+			data: data,
 			error: null,
 			message: "Agency created successfully",
 		};

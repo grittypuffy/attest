@@ -1,3 +1,4 @@
+import type { InferenceClient } from "@huggingface/inference";
 import type { Collection, Db } from "mongodb";
 
 export default interface AppState {
@@ -7,4 +8,5 @@ export default interface AppState {
 	proposalCollection: Collection;
 	phaseCollection: Collection;
 	jwtSecret: string;
+	inferenceClient: InferenceClient;
 }

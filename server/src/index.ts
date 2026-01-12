@@ -1,6 +1,7 @@
 import { cors } from "@elysiajs/cors";
 import { fromTypes, openapi } from "@elysiajs/openapi";
 import { Elysia, t } from "elysia";
+import { InferenceClient } from "@huggingface/inference";
 import { MongoClient, type Db } from "mongodb";
 import type AppState from "./config";
 import { SignInRequest, SignUpRequest } from "./models/auth";
@@ -41,6 +42,7 @@ const userCollection = db.collection("user");
 const projectCollection = db.collection("project");
 const proposalCollection = db.collection("proposal");
 const phaseCollection = db.collection("phase");
+const inferenceClient = new InferenceClient(process.env.HUGGINGFACE_TOKEN);
 
 const state: AppState = {
 	db: db,
@@ -49,6 +51,7 @@ const state: AppState = {
 	proposalCollection: proposalCollection,
 	phaseCollection: phaseCollection,
 	jwtSecret: jwtSecret,
+	inferenceClient: inferenceClient
 };
 
 const app = new Elysia()
@@ -150,8 +153,8 @@ const app = new Elysia()
 			})
 			.get(
 				"/:project_id",
-				async ({ store: { state } }) => {
-					return await getProjectHandler({ store: { state } });
+				async ({ store: { state }, params: {project_id} }) => {
+					return await getProjectHandler({ store: { state }, params: {project_id} });
 				},
 				{
 					params: t.Object({
