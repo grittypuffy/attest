@@ -4,40 +4,6 @@ import jwt from "jsonwebtoken";
 import type { SignUpRequest } from "../models/auth";
 import { Collection, ObjectId } from "mongodb";
 
-export const signUpHandler = async ({ store, body }: any) => {
-	const signUpData = body as typeof SignUpRequest;
-	const userCollection = store.state.userCollection;
-
-	const existingUser = await userCollection.findOne({
-		email: signUpData.email,
-	});
-	if (existingUser)
-		return {
-			error: "User already exists",
-			data: null,
-			message: "User already exists",
-			success: false,
-		};
-
-	const salt = await bcrypt.genSalt(10);
-	const passwordHash = await bcrypt.hash(signUpData.password, salt);
-
-	const _result = await userCollection.insertOne({
-		email: signUpData.email,
-		password: passwordHash,
-		name: signUpData.name,
-		address: signUpData.address,
-		role: "Agency",
-	});
-
-	return {
-		success: true,
-		data: null,
-		error: null,
-		message: "Signed up successfully",
-	};
-};
-
 export const signInHandler = async ({
 	store,
 	body,

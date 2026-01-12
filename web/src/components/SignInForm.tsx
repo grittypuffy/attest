@@ -11,7 +11,7 @@ import { EyeClosedIcon, EyeIcon } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useState } from "react";
 
-export const SignUpForm = () => {
+export const SignInForm = () => {
   const [response, action, isPending] = useActionState(
     async (prevState: any, queryData: any) => {
       const email: string = queryData.get("email");
@@ -30,7 +30,7 @@ export const SignUpForm = () => {
       }
       return {
         type: "success",
-        message: "Signed up successfully",
+        message: "Signed in successfully",
       };
     },
     null,
@@ -73,7 +73,7 @@ export const SignUpForm = () => {
           />
         </FormControl>
         <Button type="submit" disabled={isPending}>
-          {isPending ? "Signing Up..." : "Sign Up"}
+          {isPending ? "Signing In..." : "Sign In"}
         </Button>
 
         {response && response.type === "error" && (
