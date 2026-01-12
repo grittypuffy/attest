@@ -20,6 +20,7 @@ import {
 } from "./routes/project";
 import { SignInRequest, SignUpRequest } from "./models/auth";
 import {
+	CreateProjectPhasesRequest,
 	CreateProjectProposalRequest,
 	CreateProjectRequest,
 } from "./models/project";
@@ -175,7 +176,13 @@ const app = new Elysia()
 						params: { project_id, proposal_id },
 						body,
 					});
-				},
+				}, {
+					params: t.Object({
+						project_id: t.String(),
+						proposal_id: t.String()
+					}),
+					body: CreateProjectPhasesRequest
+				}
 			)
 			.get(
 				"/:project_id/proposal/all",
