@@ -7,6 +7,7 @@ export default interface AppState {
 	projectCollection: Collection;
 	proposalCollection: Collection;
 	phaseCollection: Collection;
+	metricsCollection: Collection;
 	jwtSecret: string;
 	inferenceClient: InferenceClient;
 }

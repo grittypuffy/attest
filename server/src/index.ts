@@ -44,6 +44,8 @@ const userCollection = db.collection("user");
 const projectCollection = db.collection("project");
 const proposalCollection = db.collection("proposal");
 const phaseCollection = db.collection("phase");
+const metricsCollection = db.collection("metrics");
+
 const inferenceClient = new InferenceClient(process.env.HUGGINGFACE_TOKEN);
 
 const state: AppState = {
@@ -52,6 +54,7 @@ const state: AppState = {
 	projectCollection: projectCollection,
 	proposalCollection: proposalCollection,
 	phaseCollection: phaseCollection,
+	metricsCollection: metricsCollection,
 	jwtSecret: jwtSecret,
 	inferenceClient: inferenceClient
 };
