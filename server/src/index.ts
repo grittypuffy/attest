@@ -19,6 +19,7 @@ import { createAgencyHandler } from "./routes/government";
 import {
 	acceptProjectProposalHandler,
 	createProjectHandler,
+	getAllProjectsHandler,
 	getProjectHandler,
 	getProjectProposalsHandler,
 	registerProjectProposalHandler,
@@ -134,6 +135,9 @@ const app = new Elysia()
 					body: CreateProjectRequest,
 				},
 			)
+			.get("/all", async ({ store: { state } }) => {
+				return await getAllProjectsHandler({ store: { state } });
+			})
 			.get(
 				"/:project_id",
 				async ({ store: { state } }) => {

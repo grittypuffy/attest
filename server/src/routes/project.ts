@@ -84,6 +84,22 @@ export const getProjectHandler = async ({
 	};
 };
 
+export const getAllProjectsHandler = async ({ store }: any) => {
+	const projectCollection: Collection = store.state.projectCollection;
+	const projects = await projectCollection.find({}).toArray();
+
+	return {
+		success: true,
+		data: projects.map((project) => ({
+			project_name: project.project_name,
+			project_id: project._id.toString(),
+			description: project.description,
+		})),
+		error: null,
+		message: "Projects fetched successfully",
+	};
+};
+
 export const registerProjectProposalHandler = async ({
 	store,
 	cookie: { token },

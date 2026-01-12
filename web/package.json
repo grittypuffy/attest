@@ -10,9 +10,9 @@
     "format": "biome format --write"
   },
   "dependencies": {
-    "@elysiajs/eden": "^1.4.6",
     "@editorjs/editorjs": "^2.31.1",
     "@editorjs/header": "^2.8.8",
+    "@elysiajs/eden": "^1.4.6",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@mui/material": "^7.3.7",
