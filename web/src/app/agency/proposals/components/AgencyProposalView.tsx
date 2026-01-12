@@ -11,7 +11,7 @@ import {
 } from "@mui/material";
 import dynamic from "next/dynamic";
 import { useState } from "react";
-import type { Proposal } from "@/lib/types/proposal";
+import type { Proposal } from "@/lib/types";
 
 // Dynamically import Editor to avoid SSR issues with window object
 const Editor = dynamic(() => import("./Editor"), { ssr: false });

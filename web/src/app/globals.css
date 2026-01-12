@@ -1,15 +1,15 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary-l: #3b82f6;
-  --color-primary-m: #2563eb;
-  --color-primary-d: #1d4ed8;
+    --color-primary-l: #3b82f6;
+    --color-primary-m: #2563eb;
+    --color-primary-d: #1d4ed8;
 
-  --color-secondary-l: #10b981;
-  --color-secondary-m: #059669;
-  --color-secondary-d: #047857;
+    --color-secondary-l: #10b981;
+    --color-secondary-m: #059669;
+    --color-secondary-d: #047857;
 }
 
 @utility app-container {
-  @apply mx-auto px-3 md:px-5 lg:px-8 md:max-w-4xl lg:max-w-6xl;
+    @apply px-3 md:px-5 lg:px-8;
 }

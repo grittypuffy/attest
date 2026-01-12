@@ -1,10 +1,10 @@
 "use client";
 
-import { Funnel, MagnifyingGlass } from "@phosphor-icons/react/dist/ssr";
-import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
-import { usePathname } from "next/navigation";
-import { useRouter } from "next/navigation";
+import { ArrowUpRightIcon } from "@phosphor-icons/react";
+import { Funnel, MagnifyingGlass } from "@phosphor-icons/react/dist/ssr";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 type ProjectStatus = "PROPOSAL" | "ACTIVE" | "COMPLETED";
 
@@ -33,7 +33,7 @@ export default function ProjectsPage() {
   const pathname = usePathname();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const router = useRouter()
-  
+
   useEffect(() => {
     bootstrapAuth();
   }, []);
@@ -60,9 +60,9 @@ export default function ProjectsPage() {
     }
   };
 
-useEffect(() => {
-  console.log("USER STATE:", user);
-}, [user]);
+  useEffect(() => {
+    console.log("USER STATE:", user);
+  }, [user]);
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -102,7 +102,7 @@ useEffect(() => {
   });
 
   return (
-    <div className="py-8">
+    <div className="py-8 max-w-5xl mx-auto">
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Public Projects</h1>
@@ -160,13 +160,12 @@ useEffect(() => {
                 <div>
                   <div className="flex items-center gap-3 mb-2">
                     <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        project.status === "PROPOSAL"
-                          ? "bg-purple-100 text-purple-800"
-                          : project.status === "ACTIVE"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-gray-100 text-gray-800"
-                      }`}
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${project.status === "PROPOSAL"
+                        ? "bg-purple-100 text-purple-800"
+                        : project.status === "ACTIVE"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-gray-100 text-gray-800"
+                        }`}
                     >
                       {project.status}
                     </span>
@@ -188,25 +187,34 @@ useEffect(() => {
 
               <p className="text-gray-600 mb-4">{project.description}</p>
 
-              <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 border-t border-gray-100 pt-4 mt-2">
-                <div className="flex items-center gap-1">
-                  <span>📍 {project.location}</span>
+              <div className="flex flex-wrap items-center justify-between gap-4 text-sm text-gray-500 border-t border-gray-100 pt-4 mt-2">
+                <div className="flex gap-3">
+                  <div className="flex items-center gap-1">
+                    <span>📍 {project.location}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span>📅 {project.date}</span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-1">
-                  <span>📅 {project.date}</span>
+                <div>
+                  <a href={`/project/${project.project_id}`} className="text-blue-600 hover:underline">
+                    <span className="inline-flex items-center gap-1">
+                      View Details <ArrowUpRightIcon />
+                    </span>
+                  </a>
                 </div>
               </div>
 
-            {isAuthenticated && user?.role === "Agency" && (
-              <div className="flex justify-end mt-4">
-                <button
-                  onClick={() => router.push("/proposal/create")}
-                  className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-emerald-600 hover:bg-emerald-700 transition-colors shadow-sm cursor-pointer"
-                >
-                  Create Proposal
-                </button>
-              </div>
-            )}
+              {isAuthenticated && user?.role === "Agency" && (
+                <div className="flex justify-end mt-4">
+                  <button
+                    onClick={() => router.push("/proposal/create")}
+                    className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-emerald-600 hover:bg-emerald-700 transition-colors shadow-sm cursor-pointer"
+                  >
+                    Create Proposal
+                  </button>
+                </div>
+              )}
 
             </div>
           ))}

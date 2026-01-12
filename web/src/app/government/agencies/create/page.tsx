@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 export default function CreateAgencyPage() {
   const router = useRouter();
@@ -39,9 +39,9 @@ export default function CreateAgencyPage() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-6xl">
       <h1 className="text-2xl font-bold text-gray-900 mb-6">Register New Agency</h1>
-      
+
       <div className="bg-white p-8 rounded-xl border border-gray-200 shadow-sm">
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
