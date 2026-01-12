@@ -81,17 +81,17 @@ export default function Navbar() {
     
     return [
       {
-        name: "My Projects",
-        href: `${baseRoute}/projects`,
+        name: "Dashboard",
+        href: `${baseRoute}`,
       },
       {
         name: "My Proposals",
         href: `${baseRoute}/proposals`,
       },
-      {
-        name: "Profile",
-        href: `${baseRoute}/profile`,
-      },
+      //{
+      //  name: "Profile",
+      //  href: `${baseRoute}/profile`,
+      //},
     ];
   };
 

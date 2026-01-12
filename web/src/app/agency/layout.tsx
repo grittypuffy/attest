@@ -7,7 +7,7 @@ import { ReactNode } from "react";
 
 const MENU_ITEMS = [
   { text: "Dashboard", icon: <SquaresFour size={24} />, path: "/agency" },
-  { text: "My Projects", icon: <Briefcase size={24} />, path: "/agency/projects" },
+  { text: "My Proposals", icon: <Briefcase size={24} />, path: "/agency/proposals" },
   //{ text: "My Proposals", icon: <FileText size={24} />, path: "/agency/proposals" },
   //{ text: "Profile", icon: <User size={24} />, path: "/agency/profile" },
 ];
@@ -70,11 +70,6 @@ export default function AgencyLayout({ children }: { children: ReactNode }) {
             <h1 className="text-lg font-semibold text-gray-900">
                 {MENU_ITEMS.find(item => item.path === pathname)?.text || 'Dashboard'}
             </h1>
-            <div className="flex items-center gap-4">
-                <button className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100">
-                   <User size={20} />
-                </button>
-            </div>
         </header>
 
         {/* Page Content Scrollable Area */}
