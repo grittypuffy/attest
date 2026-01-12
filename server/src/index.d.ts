@@ -230,6 +230,38 @@ declare const app: Elysia<"", {
         };
     };
 } & {
+    chat: {
+        new: {
+            post: {
+                body: {
+                    prompt: string;
+                };
+                params: {};
+                query: unknown;
+                headers: unknown;
+                response: {
+                    200: {
+                        error: null;
+                        success: boolean;
+                        message: string;
+                        data: {
+                            content: any;
+                        };
+                    };
+                    422: {
+                        type: "validation";
+                        on: string;
+                        summary?: string;
+                        message?: string;
+                        found?: unknown;
+                        property?: string;
+                        expected?: string;
+                    };
+                };
+            };
+        };
+    };
+} & {
     government: {
         agency: {
             create: {
