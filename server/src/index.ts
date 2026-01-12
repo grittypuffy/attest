@@ -10,7 +10,14 @@ import {
 	verifySessionHandler,
 } from "./routes/auth";
 import { createAgencyHandler } from "./routes/government";
-import { createProjectHandler, getProjectHandler, registerProjectProposalHandler } from "./routes/project";
+import {
+	acceptProjectProposalHandler,
+	createProjectHandler,
+	getProjectHandler,
+	getProjectProposalsHandler,
+	registerProjectProposalHandler,
+	registerProposalPhasesHandler,
+} from "./routes/project";
 import { SignInRequest, SignUpRequest } from "./models/auth";
 import {
 	CreateProjectProposalRequest,
@@ -146,12 +153,59 @@ const app = new Elysia()
 						params: { project_id },
 						body,
 					});
-				}, {
+				},
+				{
 					body: CreateProjectProposalRequest,
 					params: t.Object({
-						project_id: t.String()
-					})
-				}
+						project_id: t.String(),
+					}),
+				},
+			)
+			.post(
+				"/:project_id/proposal/:proposal_id/phases/register",
+				async ({
+					store,
+					cookie: { token },
+					params: { project_id, proposal_id },
+					body,
+				}) => {
+					return await registerProposalPhasesHandler({
+						store,
+						cookie: { token },
+						params: { project_id, proposal_id },
+						body,
+					});
+				},
+			)
+			.get(
+				"/:project_id/proposal/all",
+				async ({ store, params: { project_id } }) => {
+					return await getProjectProposalsHandler({
+						store,
+						params: { project_id },
+					});
+				},
+				{
+					params: t.Object({
+						project_id: t.String(),
+					}),
+				},
+			)
+			.post(
+				"/:project_id/proposal/accept",
+				async ({ store, cookie: { token }, params: { project_id }, body }) => {
+					return await acceptProjectProposalHandler({
+						store,
+						cookie: { token },
+						params: { project_id },
+						body,
+					});
+				},
+				{
+					params: t.Object({
+						project_id: t.String(),
+					}),
+				},
 			),
 	)
 	.listen(8000);
