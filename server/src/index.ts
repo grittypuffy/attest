@@ -26,6 +26,10 @@ import {
 	registerProjectProposalHandler,
 	registerProposalPhasesHandler,
 } from "./routes/project";
+import {
+	getAgencyData,
+	getAgencyProjectProposalsHandler,
+} from "./routes/agency";
 
 const client = new MongoClient(process.env.MONGODB_URI || "");
 const jwtSecret = process.env.JWT_SECRET || "";
@@ -236,6 +240,29 @@ const app = new Elysia()
 					});
 				},
 			),
+	)
+	.group("/agency", (app) =>
+		app
+			.get(
+				"/:agency_id/proposals",
+				async ({ store, params: { agency_id } }) => {
+					return await getAgencyProjectProposalsHandler({
+						store,
+						params: { agency_id },
+					});
+				},
+				{
+					params: t.Object({
+						agency_id: t.String(),
+					}),
+				},
+			)
+			.get("/:agency_id", async ({ store, params: { agency_id } }) => {
+				return await getAgencyData({
+					store,
+					params: { agency_id },
+				});
+			}),
 	)
 	.listen(8000);
 
