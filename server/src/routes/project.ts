@@ -10,7 +10,7 @@ import {
 	CreateProjectRequest,
 } from "../models/project";
 import { Collection, ObjectId } from "mongodb";
-import { generateSummary } from "./suggestions";
+import { generateSummary } from "../services/suggestions";
 
 export const createProjectHandler = async ({
 	store,
@@ -134,12 +134,14 @@ export const registerProjectProposalHandler = async ({
 			description: projectProposalData.description,
 			status: "Pending",
 		};
+		if (!proposalDoc?.summary) {
+			proposalDoc.summary = await generateSummary({store, params: {project_id}, proposalDoc});
+		}
 		const result = await proposalCollection.insertOne(proposalDoc);
 		const data = {
 				proposal_id: result.insertedId.toString(),
 				...proposalDoc
 			};
-		// await generateSummary({store, cookie: {token}, params: {project_id}, data});
 
 		return {
 			success: true,
