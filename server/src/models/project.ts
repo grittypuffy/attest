@@ -1,16 +1,34 @@
-import {t} from "elysia";
+import { t } from "elysia";
 
 export const CreateProjectRequest = t.Object({
-    project_name: t.String(),
-    description: t.String()
-})
+	project_name: t.String(),
+	description: t.String(),
+});
 
-export const CreateProjectProposalRequest =  t.Object({
-  proposal_name: t.String(),
-  total_budget: t.Integer(),
-  timeline: t.String(),
-  description: t.String(),
-  summary: t.Optional(t.String()),
-  phases: t.Integer(),
-  outcome: t.String()
-})
+export const CreateProjectProposalRequest = t.Object({
+	proposal_name: t.String(),
+	total_budget: t.Number(),
+	timeline: t.String(),
+	description: t.String(),
+	summary: t.Optional(t.String()),
+	no_of_phases: t.Integer(),
+	outcome: t.String(),
+});
+
+export const AcceptProjectProposalRequest = t.Object({
+	proposal_id: t.String(),
+});
+
+export const CreateProjectPhasesRequest = t.Object({
+	phases: t.Array(
+		t.Object({
+			number: t.String(),
+			title: t.String(),
+			description: t.String(),
+			budget: t.Number(),
+			start_date: t.String({ format: "date-time" }),
+			end_date: t.String({ format: "date-time" }),
+			validating_documents: t.Optional(t.Array(t.String())),
+		}),
+	),
+});

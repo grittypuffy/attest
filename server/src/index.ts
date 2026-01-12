@@ -24,12 +24,14 @@ const db: Db = client.db(process.env.MONGODB_DB_NAME);
 const userCollection = db.collection("user");
 const projectCollection = db.collection("project");
 const proposalCollection = db.collection("proposal");
+const phaseCollection = db.collection("phase");
 
 const state: AppState = {
 	db: db,
 	userCollection: userCollection,
 	projectCollection: projectCollection,
 	proposalCollection: proposalCollection,
+	phaseCollection: phaseCollection,
 	jwtSecret: jwtSecret,
 };
 
