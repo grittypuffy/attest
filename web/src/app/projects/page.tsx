@@ -3,6 +3,8 @@
 import { Funnel, MagnifyingGlass } from "@phosphor-icons/react/dist/ssr";
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
+import { usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 type ProjectStatus = "PROPOSAL" | "ACTIVE" | "COMPLETED";
 
@@ -25,6 +27,42 @@ export default function ProjectsPage() {
   );
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const [user, setUser] = useState<User | null>(null);
+
+  const pathname = usePathname();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const router = useRouter()
+  
+  useEffect(() => {
+    bootstrapAuth();
+  }, []);
+
+  const bootstrapAuth = async () => {
+    try {
+      const session = await api.auth.session.valid.get();
+
+      if (!session.data?.data?.valid) {
+        setIsAuthenticated(false);
+        setUser(null);
+        return;
+      }
+
+      setIsAuthenticated(true);
+
+      const userRes = await api.auth.user.get();
+      if (userRes.data?.success) {
+        setUser(userRes.data.data);
+      }
+    } catch {
+      setIsAuthenticated(false);
+      setUser(null);
+    }
+  };
+
+useEffect(() => {
+  console.log("USER STATE:", user);
+}, [user]);
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -158,6 +196,18 @@ export default function ProjectsPage() {
                   <span>📅 {project.date}</span>
                 </div>
               </div>
+
+            {isAuthenticated && user?.role === "Agency" && (
+              <div className="flex justify-end mt-4">
+                <button
+                  onClick={() => router.push("/proposal/create")}
+                  className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-emerald-600 hover:bg-emerald-700 transition-colors shadow-sm cursor-pointer"
+                >
+                  Create Proposal
+                </button>
+              </div>
+            )}
+
             </div>
           ))}
 

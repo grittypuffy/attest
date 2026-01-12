@@ -11,8 +11,7 @@ import {
 
 const STATS = [
   {
-    label: "Active Projects",
-    value: "12",
+    label: "Active Projects", value: "12",
     icon: <Briefcase size={24} weight="duotone" />,
     change: "+2 this month",
     trend: "up",
