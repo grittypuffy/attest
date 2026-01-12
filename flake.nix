@@ -11,10 +11,10 @@
      	in {
         devShells.default = pkgs.mkShell {
           NIX_SHELL_NAME="ATTEST";
-       	  packages = with pkgs; [
-            bun
-         	];
-        };
+       	            packages = with pkgs; [
+       	              bun
+       	              foundry
+       	           	];        };
       }
     );
 }

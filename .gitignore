@@ -1,1 +1,9 @@
 .direnv
+
+# Contracts
+contracts/node_modules/
+contracts/out/
+contracts/cache/
+contracts/broadcast/
+contracts/.env*.log
+contracts/.env
