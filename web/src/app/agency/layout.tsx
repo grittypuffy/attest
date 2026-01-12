@@ -8,15 +8,15 @@ import { ReactNode } from "react";
 const MENU_ITEMS = [
   { text: "Dashboard", icon: <SquaresFour size={24} />, path: "/agency" },
   { text: "My Projects", icon: <Briefcase size={24} />, path: "/agency/projects" },
-  { text: "My Proposals", icon: <FileText size={24} />, path: "/agency/proposals" },
-  { text: "Profile", icon: <User size={24} />, path: "/agency/profile" },
+  //{ text: "My Proposals", icon: <FileText size={24} />, path: "/agency/proposals" },
+  //{ text: "Profile", icon: <User size={24} />, path: "/agency/profile" },
 ];
 
 export default function AgencyLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
 
   return (
-    <div className="fixed inset-0 z-50 flex bg-gray-50 overflow-hidden">
+    <div className="fixed inset-0 z-50 flex bg-gray-50 overflow-hidden mt-18">
       {/* Sidebar */}
       <aside className="w-64 bg-white border-r border-gray-200 flex flex-col shadow-sm z-20">
         <div className="h-16 flex items-center px-6 border-b border-gray-200 bg-white">
