@@ -11,10 +11,12 @@ const jwtSecret = process.env.JWT_SECRET || "";
 await client.connect();
 const db: Db = client.db(process.env.MONGODB_DB_NAME);
 const userCollection = db.collection("user");
+const projectCollection = db.collection("project");
 
 const state: AppState = {
 	db: db,
 	userCollection: userCollection,
+	projectCollection: projectCollection,
 	jwtSecret: jwtSecret,
 };
 

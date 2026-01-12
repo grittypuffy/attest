@@ -2,68 +2,176 @@ import type { Context } from "elysia";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import type { SignUpRequest } from "../models/auth";
+import { Collection, ObjectId } from "mongodb";
 
 export const signUpHandler = async ({ store, body }: any) => {
-  const signUpData = body as typeof SignUpRequest;
-  const userCollection = store.state.userCollection;
+	const signUpData = body as typeof SignUpRequest;
+	const userCollection = store.state.userCollection;
 
-  const existingUser = await userCollection.findOne({
-    email: signUpData.email,
-  });
-  if (existingUser) return { error: "User already exists", "data": null, "message": "User already exists", "success": false };
+	const existingUser = await userCollection.findOne({
+		email: signUpData.email,
+	});
+	if (existingUser)
+		return {
+			error: "User already exists",
+			data: null,
+			message: "User already exists",
+			success: false,
+		};
 
-  const salt = await bcrypt.genSalt(10);
-  const passwordHash = await bcrypt.hash(signUpData.password, salt);
+	const salt = await bcrypt.genSalt(10);
+	const passwordHash = await bcrypt.hash(signUpData.password, salt);
 
-  const _result = await userCollection.insertOne({
-    email: signUpData.email,
-    password: passwordHash,
-    name: signUpData.name,
-    address: signUpData.address,
-    role: "Agency",
-  });
+	const _result = await userCollection.insertOne({
+		email: signUpData.email,
+		password: passwordHash,
+		name: signUpData.name,
+		address: signUpData.address,
+		role: "Agency",
+	});
 
-  return {
-    success: true,
-    data: null,
-    error: null,
-    message: "Signed up successfully",
-  };
+	return {
+		success: true,
+		data: null,
+		error: null,
+		message: "Signed up successfully",
+	};
 };
 
 export const signInHandler = async ({
-  store,
-  body,
-  cookie: { token },
+	store,
+	body,
+	cookie: { token },
 }: any) => {
-  const { email, password } = body;
+	const { email, password } = body;
 
-  const database = store.state.db;
-  const userCollection = database.collection("user");
+	const database = store.state.db;
+	const userCollection = database.collection("user");
 
-  const user = await userCollection.findOne({ email });
-  if (!user) return { error: "Invalid username or password" };
-  const isPasswordValid = await bcrypt.compare(password, user.password);
-  if (!isPasswordValid) return { error: "Invalid username or password", "data": null, "message": "User already exists", "success": false };
+	const user = await userCollection.findOne({ email });
+	if (!user) return { error: "Invalid username or password" };
+	const isPasswordValid = await bcrypt.compare(password, user.password);
+	if (!isPasswordValid)
+		return {
+			error: "Invalid username or password",
+			data: null,
+			message: "User already exists",
+			success: false,
+		};
 
-  const jwtToken = jwt.sign(
-    { id: user._id.toString(), email: user.email, role: user.role },
-    store.state.jwtSecret,
-    { expiresIn: "1h" }
-  );
-  token.value = jwtToken;
-  token.httpOnly = true;
-  token.path = "/";
-  token.set({
-    sameSite: "lax",
-    secure: true,
-    maxAge: 60 * 60 * 24 * 7,
-  });
+	const jwtToken = jwt.sign(
+		{ id: user._id.toString(), email: user.email, role: user.role },
+		store.state.jwtSecret,
+		{ expiresIn: "1h" },
+	);
+	token.value = jwtToken;
+	token.httpOnly = true;
+	token.path = "/";
+	token.set({
+		sameSite: "lax",
+		secure: true,
+		maxAge: 60 * 60 * 24 * 7,
+	});
 
-  return {
-    success: true,
-    data: { role: user.role, email: user.email, name: user.name },
-    error: null,
-    message: "Signed in successfully",
-  };
+	return {
+		success: true,
+		data: { role: user.role, email: user.email, name: user.name },
+		error: null,
+		message: "Signed in successfully",
+	};
 };
+
+export const getAuthUserHandler = async ({ store, cookie: { token } }: any) => {
+	const userCollection: Collection = store.state.userCollection;
+	try {
+		const decoded = jwt.verify(token.value, store.state.jwtSecret) as {
+			id: string;
+			email: string;
+			role: string;
+		};
+		const existingUser = await userCollection.findOne({
+			email: decoded.email,
+		});
+		if (!existingUser)
+			return {
+				error: "No user found",
+				data: null,
+				success: false,
+				message: "Failed to get user data",
+			};
+		return {
+			success: true,
+			data: {
+				id: existingUser._id.toString(),
+				email: existingUser.email,
+				role: existingUser.role,
+				name: existingUser.name,
+				address: existingUser.address,
+			},
+			error: null,
+			message: "Agency created successfully",
+		};
+	} catch (_e) {
+		return { error: "Invalid or expired token", data: null, message: "Invalid session", success: false };
+	}
+};
+
+export const getUserHandler = async ({ store, params: { id } }: any) => {
+	const userCollection: Collection = store.state.userCollection;
+	const existingUser = await userCollection.findOne({
+		_id: new ObjectId(id),
+	});
+	if (!existingUser)
+		return {
+			error: "No user found",
+			data: null,
+			success: false,
+			message: "Failed to get user data",
+		};
+	return {
+		success: true,
+		data: {
+			id: existingUser._id.toString(),
+			email: existingUser.email,
+			role: existingUser.role,
+			name: existingUser.name,
+			address: existingUser.address,
+		},
+		error: null,
+		message: "Agency created successfully",
+	};
+};
+
+export const verifySessionHandler = async ({ store, cookie: { token } }: any) => {
+	const userCollection: Collection = store.state.userCollection;
+	try {
+		const decoded = jwt.verify(token.value, store.state.jwtSecret) as {
+			id: string;
+			email: string;
+			role: string;
+		};
+		const existingUser = await userCollection.findOne({
+			email: decoded.email,
+		});
+		if (!existingUser)
+			return {
+				error: "No user found",
+				data: {
+          valid: false
+        },
+				success: false,
+				message: "Failed to get user data",
+			};
+		return {
+			success: true,
+			data: {
+        valid: true
+			},
+			error: null,
+			message: "Agency created successfully",
+		};
+	} catch (_e) {
+		return { error: "Invalid or expired token", data: {valid: false}, message: "Invalid session", success: false };
+	}
+};
+
