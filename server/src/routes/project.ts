@@ -139,7 +139,7 @@ export const registerProjectProposalHandler = async ({
 				proposal_id: result.insertedId.toString(),
 				...proposalDoc
 			};
-		await generateSummary({store, cookie: {token}, params: {project_id}, data});
+		// await generateSummary({store, cookie: {token}, params: {project_id}, data});
 
 		return {
 			success: true,
