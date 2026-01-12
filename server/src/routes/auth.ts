@@ -116,10 +116,10 @@ export const getAuthUserHandler = async ({ store, cookie: { token } }: any) => {
 	}
 };
 
-export const getUserHandler = async ({ store, params: { id } }: any) => {
+export const getUserHandler = async ({ store, params: { user_id } }: any) => {
 	const userCollection: Collection = store.state.userCollection;
 	const existingUser = await userCollection.findOne({
-		_id: new ObjectId(id),
+		_id: new ObjectId(user_id),
 	});
 	if (!existingUser)
 		return {
