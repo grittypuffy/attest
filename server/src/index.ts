@@ -57,11 +57,11 @@ const app = new Elysia()
 	)
 	.use(
 		cors({
-			origin: process.env.FRONTEND_URL,
+			origin: true,
 			credentials: true,
-			methods: "*",
-			allowedHeaders: "*",
-			exposeHeaders: "*",
+			methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+			allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
+			exposeHeaders: ["Set-Cookie"],
 			preflight: true,
 		}),
 	)

@@ -1,7 +1,11 @@
 import type { App } from "@api";
 import { treaty } from "@elysiajs/eden";
 
-export const api = treaty<App>("localhost:3000/api", {
+const baseURL = typeof window !== "undefined" 
+  ? `${window.location.protocol}//${window.location.host}/api`
+  : "http://localhost:3000/api";
+
+export const api = treaty<App>(baseURL, {
     fetch: {
         credentials: "include",
     },
