@@ -19,6 +19,11 @@ export const AcceptProjectProposalRequest = t.Object({
 	proposal_id: t.String(),
 });
 
+export const AcceptProjectPhaseRequest = t.Object({
+	phase_id: t.String(),
+});
+
+
 export const CreateProjectPhasesRequest = t.Object({
 	phases: t.Array(
 		t.Object({
