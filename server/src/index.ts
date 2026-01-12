@@ -33,6 +33,8 @@ import {
 	getAgencyData,
 	getAgencyProjectProposalsHandler,
 } from "./routes/agency";
+import { generateChatResponse } from "./routes/chat";
+import { ChatRequest } from "./models/chat";
 
 const client = new MongoClient(process.env.MONGODB_URI || "");
 const jwtSecret = process.env.JWT_SECRET || "";
@@ -117,6 +119,14 @@ const app = new Elysia()
 				user_id: t.String(),
 			}),
 		},
+	)
+	.post("/chat/new",
+		async ({store: {state}, body}) => {
+			return await generateChatResponse({store: {state}, body});
+		},
+		{
+			body: ChatRequest
+		}
 	)
 	// Government
 	.post(
