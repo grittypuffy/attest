@@ -259,7 +259,7 @@ export const getProjectProposalHandler = async ({
 		};
 	const phases = await phaseCollection
 		.find({
-			proposal_id: { $in: [proposal_id] },
+			proposal_id: { $in: [new ObjectId(proposal_id)] },
 		})
 		.toArray();
 	const { _id, ...proposalData } = proposal;
