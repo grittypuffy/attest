@@ -4,7 +4,33 @@ import type {
   PhaseRegistrationItem,
   PhaseRegistrationPayload,
 } from "@/lib/types";
-import { X } from "@phosphor-icons/react";
+import {
+  alpha,
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Divider,
+  IconButton,
+  Stack,
+  TextField,
+  Typography,
+  useTheme,
+} from "@mui/material";
+import {
+  CalendarBlank,
+  CurrencyDollar,
+  FileText,
+  ListNumbers,
+  PlusCircle,
+  Trash,
+  X,
+} from "@phosphor-icons/react";
 import { useState } from "react";
 
 type Props = {
@@ -22,6 +48,7 @@ export default function PhaseRegistrationModal({
   projectId,
   projectName,
 }: Props) {
+  const theme = useTheme();
   const [phases, setPhases] = useState<PhaseRegistrationItem[]>([
     {
       budget: 0,
@@ -34,8 +61,6 @@ export default function PhaseRegistrationModal({
     },
   ]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  if (!isOpen) return null;
 
   const addPhase = () => {
     setPhases([
@@ -101,103 +126,159 @@ export default function PhaseRegistrationModal({
     }
   };
 
+  const handleClose = () => {
+    if (!isSubmitting) {
+      onClose();
+    }
+  };
+
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
-      <div className="flex min-h-screen items-center justify-center p-4">
-        {/* Backdrop */}
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
-          onClick={onClose}
-        />
+    <Dialog
+      open={isOpen}
+      onClose={handleClose}
+      maxWidth="md"
+      fullWidth
+      PaperProps={{
+        sx: {
+          borderRadius: 3,
+          maxHeight: "90vh",
+        },
+      }}
+    >
+      {/* Header */}
+      <DialogTitle
+        sx={{
+          pb: 2,
+          display: "flex",
+          alignItems: "flex-start",
+          justifyContent: "space-between",
+        }}
+      >
+        <Box>
+          <Typography variant="h5" fontWeight={700} gutterBottom>
+            Register Project Phases
+          </Typography>
+          <Stack direction="row" spacing={1} alignItems="center">
+            <Typography variant="body2" color="text.secondary">
+              Project:
+            </Typography>
+            <Chip
+              label={projectName}
+              size="small"
+              sx={{
+                fontWeight: 600,
+                bgcolor: alpha(theme.palette.primary.main, 0.1),
+                color: "primary.main",
+              }}
+            />
+          </Stack>
+        </Box>
+        <IconButton
+          onClick={handleClose}
+          disabled={isSubmitting}
+          sx={{
+            color: "text.secondary",
+            "&:hover": {
+              bgcolor: alpha(theme.palette.action.hover, 0.08),
+            },
+          }}
+        >
+          <X size={24} weight="bold" />
+        </IconButton>
+      </DialogTitle>
 
-        {/* Modal */}
-        <div className="relative w-full max-w-4xl bg-white rounded-xl shadow-2xl max-h-[90vh] overflow-y-auto">
-          {/* Header */}
-          <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between z-10">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900">
-                Register Project Phases
-              </h2>
-              <p className="text-sm text-gray-600 mt-1">
-                Project: <span className="font-semibold">{projectName}</span>
-              </p>
-            </div>
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
-            >
-              <X size={24} weight="bold" />
-            </button>
-          </div>
+      <Divider />
 
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="p-6">
-            <div className="space-y-6">
-              {phases.map((phase, index) => (
-                <div
-                  key={index}
-                  className="border border-gray-200 rounded-lg p-6 bg-gray-50 relative"
-                >
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      Phase {phase.number}
-                    </h3>
+      {/* Form Content */}
+      <DialogContent sx={{ pt: 3 }}>
+        <form id="phase-registration-form" onSubmit={handleSubmit}>
+          <Stack spacing={3}>
+            {phases.map((phase, index) => (
+              <Card
+                key={index}
+                elevation={0}
+                sx={{
+                  border: 1,
+                  borderColor: "divider",
+                  borderRadius: 2,
+                  bgcolor: alpha(theme.palette.grey[50], 0.5),
+                }}
+              >
+                <CardContent sx={{ p: 3 }}>
+                  {/* Phase Header */}
+                  <Stack
+                    direction="row"
+                    justifyContent="space-between"
+                    alignItems="center"
+                    sx={{ mb: 3 }}
+                  >
+                    <Stack direction="row" spacing={1} alignItems="center">
+                      <ListNumbers size={24} weight="duotone" />
+                      <Typography variant="h6" fontWeight={700}>
+                        Phase {phase.number}
+                      </Typography>
+                    </Stack>
                     {phases.length > 1 && (
-                      <button
-                        type="button"
+                      <Button
+                        startIcon={<Trash size={18} />}
                         onClick={() => removePhase(index)}
-                        className="text-red-600 hover:text-red-700 text-sm font-medium"
+                        color="error"
+                        size="small"
+                        sx={{
+                          textTransform: "none",
+                          fontWeight: 600,
+                        }}
                       >
-                        Remove Phase
-                      </button>
+                        Remove
+                      </Button>
                     )}
-                  </div>
+                  </Stack>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Stack spacing={2.5}>
                     {/* Title */}
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Phase Title *
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={phase.title}
-                        onChange={(e) =>
-                          updatePhase(index, "title", e.target.value)
-                        }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                        placeholder="e.g., Planning and Design Phase"
-                      />
-                    </div>
+                    <TextField
+                      fullWidth
+                      required
+                      label="Phase Title"
+                      value={phase.title}
+                      onChange={(e) =>
+                        updatePhase(index, "title", e.target.value)
+                      }
+                      placeholder="e.g., Planning and Design Phase"
+                      InputProps={{
+                        startAdornment: (
+                          <Box sx={{ mr: 1, display: "flex" }}>
+                            <FileText
+                              size={20}
+                              weight="duotone"
+                              style={{ color: theme.palette.text.secondary }}
+                            />
+                          </Box>
+                        ),
+                      }}
+                    />
 
                     {/* Description */}
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Description *
-                      </label>
-                      <textarea
-                        required
-                        value={phase.description}
-                        onChange={(e) =>
-                          updatePhase(index, "description", e.target.value)
-                        }
-                        rows={3}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                        placeholder="Describe the objectives and deliverables for this phase"
-                      />
-                    </div>
+                    <TextField
+                      fullWidth
+                      required
+                      multiline
+                      rows={3}
+                      label="Description"
+                      value={phase.description}
+                      onChange={(e) =>
+                        updatePhase(index, "description", e.target.value)
+                      }
+                      placeholder="Describe the objectives and deliverables for this phase"
+                    />
 
-                    {/* Budget */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Budget (₹) *
-                      </label>
-                      <input
-                        type="number"
+                    {/* Budget and Phase Number Row */}
+                    <Stack direction={{ xs: "column", sm: "row" }} spacing={2.5}>
+                      <TextField
+                        fullWidth
                         required
-                        min="0"
-                        step="0.01"
+                        type="number"
+                        label="Budget"
                         value={phase.budget}
                         onChange={(e) =>
                           updatePhase(
@@ -206,120 +287,198 @@ export default function PhaseRegistrationModal({
                             parseFloat(e.target.value) || 0,
                           )
                         }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                         placeholder="0.00"
+                        inputProps={{
+                          min: 0,
+                          step: 0.01,
+                        }}
+                        InputProps={{
+                          startAdornment: (
+                            <Box sx={{ mr: 1, display: "flex" }}>
+                              <CurrencyDollar
+                                size={20}
+                                weight="duotone"
+                                style={{ color: theme.palette.text.secondary }}
+                              />
+                            </Box>
+                          ),
+                        }}
                       />
-                    </div>
 
-                    {/* Phase Number */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Phase Number *
-                      </label>
-                      <input
-                        type="text"
+                      <TextField
+                        fullWidth
                         required
+                        label="Phase Number"
                         value={phase.number}
                         onChange={(e) =>
                           updatePhase(index, "number", e.target.value)
                         }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                         placeholder="1"
+                        InputProps={{
+                          startAdornment: (
+                            <Box sx={{ mr: 1, display: "flex" }}>
+                              <ListNumbers
+                                size={20}
+                                weight="duotone"
+                                style={{ color: theme.palette.text.secondary }}
+                              />
+                            </Box>
+                          ),
+                        }}
                       />
-                    </div>
+                    </Stack>
 
-                    {/* Start Date */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Start Date *
-                      </label>
-                      <input
-                        type="datetime-local"
+                    {/* Start Date and End Date Row */}
+                    <Stack direction={{ xs: "column", sm: "row" }} spacing={2.5}>
+                      <TextField
+                        fullWidth
                         required
+                        type="datetime-local"
+                        label="Start Date"
                         value={phase.start_date}
                         onChange={(e) =>
                           updatePhase(index, "start_date", e.target.value)
                         }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        InputLabelProps={{
+                          shrink: true,
+                        }}
+                        InputProps={{
+                          startAdornment: (
+                            <Box sx={{ mr: 1, display: "flex" }}>
+                              <CalendarBlank
+                                size={20}
+                                weight="duotone"
+                                style={{ color: theme.palette.text.secondary }}
+                              />
+                            </Box>
+                          ),
+                        }}
                       />
-                    </div>
 
-                    {/* End Date */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        End Date *
-                      </label>
-                      <input
-                        type="datetime-local"
+                      <TextField
+                        fullWidth
                         required
+                        type="datetime-local"
+                        label="End Date"
                         value={phase.end_date}
                         onChange={(e) =>
                           updatePhase(index, "end_date", e.target.value)
                         }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        InputLabelProps={{
+                          shrink: true,
+                        }}
+                        InputProps={{
+                          startAdornment: (
+                            <Box sx={{ mr: 1, display: "flex" }}>
+                              <CalendarBlank
+                                size={20}
+                                weight="duotone"
+                                style={{ color: theme.palette.text.secondary }}
+                              />
+                            </Box>
+                          ),
+                        }}
                       />
-                    </div>
+                    </Stack>
 
                     {/* Validating Documents */}
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Validating Documents (Optional)
-                      </label>
-                      <input
-                        type="text"
-                        value={phase.validating_documents?.join(", ") || ""}
-                        onChange={(e) =>
-                          updatePhase(
-                            index,
-                            "validating_documents",
-                            e.target.value
-                              .split(",")
-                              .map((s) => s.trim())
-                              .filter(Boolean),
-                          )
-                        }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                        placeholder="document1.pdf, document2.pdf (comma-separated)"
-                      />
-                      <p className="text-xs text-gray-500 mt-1">
-                        Enter document names separated by commas
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+                    <TextField
+                      fullWidth
+                      label="Validating Documents (Optional)"
+                      value={phase.validating_documents?.join(", ") || ""}
+                      onChange={(e) =>
+                        updatePhase(
+                          index,
+                          "validating_documents",
+                          e.target.value
+                            .split(",")
+                            .map((s) => s.trim())
+                            .filter(Boolean),
+                        )
+                      }
+                      placeholder="document1.pdf, document2.pdf (comma-separated)"
+                      helperText="Enter document names separated by commas"
+                      InputProps={{
+                        startAdornment: (
+                          <Box sx={{ mr: 1, display: "flex" }}>
+                            <FileText
+                              size={20}
+                              weight="duotone"
+                              style={{ color: theme.palette.text.secondary }}
+                            />
+                          </Box>
+                        ),
+                      }}
+                    />
+                  </Stack>
+                </CardContent>
+              </Card>
+            ))}
 
             {/* Add Phase Button */}
-            <button
-              type="button"
+            <Button
+              fullWidth
+              variant="outlined"
+              startIcon={<PlusCircle size={20} weight="duotone" />}
               onClick={addPhase}
-              className="mt-4 w-full py-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-blue-500 hover:text-blue-600 transition-colors font-medium"
+              sx={{
+                py: 2,
+                borderStyle: "dashed",
+                borderWidth: 2,
+                textTransform: "none",
+                fontWeight: 600,
+                fontSize: "0.9375rem",
+                "&:hover": {
+                  borderStyle: "dashed",
+                  borderWidth: 2,
+                  bgcolor: alpha(theme.palette.primary.main, 0.04),
+                },
+              }}
             >
-              + Add Another Phase
-            </button>
+              Add Another Phase
+            </Button>
+          </Stack>
+        </form>
+      </DialogContent>
 
-            {/* Actions */}
-            <div className="flex gap-3 mt-6 pt-6 border-t border-gray-200">
-              <button
-                type="button"
-                onClick={onClose}
-                disabled={isSubmitting}
-                className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="flex-1 px-4 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isSubmitting ? "Registering..." : "Register Phases"}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
+      <Divider />
+
+      {/* Actions */}
+      <DialogActions sx={{ px: 3, py: 2.5 }}>
+        <Button
+          onClick={handleClose}
+          disabled={isSubmitting}
+          variant="outlined"
+          sx={{
+            px: 3,
+            py: 1.25,
+            textTransform: "none",
+            fontWeight: 600,
+            borderRadius: 2,
+          }}
+        >
+          Cancel
+        </Button>
+        <Button
+          type="submit"
+          form="phase-registration-form"
+          disabled={isSubmitting}
+          variant="contained"
+          sx={{
+            px: 3,
+            py: 1.25,
+            textTransform: "none",
+            fontWeight: 600,
+            borderRadius: 2,
+            boxShadow: theme.shadows[2],
+            "&:hover": {
+              boxShadow: theme.shadows[4],
+            },
+          }}
+        >
+          {isSubmitting ? "Registering..." : "Register Phases"}
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 }

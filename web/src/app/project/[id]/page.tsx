@@ -34,7 +34,6 @@ import {
   CalendarBlank,
   CaretDown,
   CheckCircle,
-  CurrencyDollar,
   CurrencyInrIcon,
   FileText,
   Folder,
@@ -286,12 +285,12 @@ const ProjectDetails = ({
             </>
           )}
 
-        {selectedTab === 1 && isAgencyOrGovernment && (
-          <SubmitProposalForm 
-            projectId={project.project_id} 
-            projectOnchainId={project.onchain_id} 
-          />
-        )}
+          {selectedTab === 1 && isAgencyOrGovernment && (
+            <SubmitProposalForm
+              projectId={project.project_id}
+              projectOnchainId={project.onchain_id}
+            />
+          )}
         </CardContent>
       </Card>
 
@@ -510,7 +509,7 @@ const SubmitProposalForm = ({ projectId, projectOnchainId }: { projectId: string
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position="start">
-                          <CurrencyDollar size={20} weight="duotone" />
+                          <CurrencyInrIcon size={20} weight="duotone" />
                         </InputAdornment>
                       ),
                     }}
@@ -670,7 +669,7 @@ const ProposalCard = ({
         >
           <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 2 }}>
             <Stack direction="row" spacing={1} alignItems="center">
-              <Buildings size={24} weight="duotone" color="#2563EB" />
+              <FileText size={24} weight="duotone" color="#2563EB" />
               <Chip
                 label="Active"
                 size="small"
@@ -685,7 +684,7 @@ const ProposalCard = ({
             component="h3"
             className="font-semibold mb-2"
           >
-            Proposal #{proposal.proposal_name.slice(0, 8)}
+            {proposal.proposal_name.slice(0, 8)}
           </Typography>
 
           <div className="flex items-center gap-2 mb-3">
@@ -1035,7 +1034,7 @@ const ProposalDetailsView = ({
                                   color="text.secondary"
                                 >
                                   <Stack direction="row" spacing={0.5} alignItems="center">
-                                    <CurrencyDollar size={16} weight="duotone" />
+                                    <CurrencyInrIcon size={16} weight="duotone" />
                                     <span>₹{phase.budget?.toLocaleString() || "N/A"}</span>
                                   </Stack>
                                 </Typography>

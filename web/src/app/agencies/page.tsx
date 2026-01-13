@@ -1,12 +1,28 @@
 "use client";
 
+import { api } from "@/lib/api";
 import {
+  Box,
+  Card,
+  CardContent,
+  Chip,
+  CircularProgress,
+  Container,
+  Divider,
+  Grid,
+  InputAdornment,
+  Stack,
+  TextField,
+  Typography,
+} from "@mui/material";
+import {
+  Briefcase,
   CheckCircle,
   MagnifyingGlass,
+  MapPin,
   Star,
-} from "@phosphor-icons/react/dist/ssr";
+} from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
-import { api } from "@/lib/api";
 
 interface Agency {
   id: string;
@@ -51,95 +67,210 @@ export default function AgenciesPage() {
   );
 
   return (
-    <div className="py-8">
-      <div className="max-w-2xl mx-auto text-center mb-12">
-        <h1 className="text-3xl font-bold text-gray-900 mb-4">
+    <Container maxWidth="lg" sx={{ py: 4 }}>
+      {/* Header Section */}
+      <Box sx={{ mb: 6, textAlign: "center", maxWidth: 800, mx: "auto" }}>
+        <Typography variant="h3" fontWeight={700} gutterBottom>
           Find Accredited Agencies
-        </h1>
-        <p className="text-gray-600 mb-8">
+        </Typography>
+        <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
           Search for verified agencies to partner with on government projects.
           Check their credentials, ratings, and past performance.
-        </p>
+        </Typography>
 
-        <div className="relative max-w-lg mx-auto">
-          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
-            <MagnifyingGlass size={20} />
-          </div>
-          <input
-            type="text"
-            placeholder="Search by name or specialization..."
-            className="pl-11 pr-4 py-3 border border-gray-300 rounded-full shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none w-full"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-      </div>
+        {/* Search Bar */}
+        <TextField
+          placeholder="Search by name or specialization..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          fullWidth
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <MagnifyingGlass size={20} />
+              </InputAdornment>
+            ),
+            sx: {
+              borderRadius: 8,
+              bgcolor: "background.paper",
+            },
+          }}
+          sx={{
+            maxWidth: 600,
+            mx: "auto",
+            "& .MuiOutlinedInput-root": {
+              "&:hover fieldset": {
+                borderColor: "primary.main",
+              },
+            },
+          }}
+        />
+      </Box>
 
+      {/* Loading State */}
       {loading ? (
-        <div className="flex justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        </div>
+        <Box sx={{ display: "flex", justifyContent: "center", py: 10 }}>
+          <CircularProgress size={48} />
+        </Box>
       ) : (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredAgencies.map((agency) => (
-            <div
-              key={agency.id}
-              className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-lg transition-shadow flex flex-col"
-            >
-              <div className="flex justify-between items-start mb-4">
-                <h3 className="text-lg font-bold text-gray-900 line-clamp-1">
-                  {agency.name}
-                </h3>
-                {agency.isAccredited && (
-                  <div className="text-blue-600" title="Accredited Agency">
-                    <CheckCircle size={24} weight="fill" />
-                  </div>
-                )}
-              </div>
-
-              <div className="flex items-center mb-4">
-                <Star weight="fill" className="text-yellow-400 mr-1" />
-                <span className="font-semibold text-gray-900 mr-1">
-                  {agency.rating}
-                </span>
-                <span className="text-sm text-gray-500">
-                  ({agency.reviewCount} reviews)
-                </span>
-              </div>
-
-              <p className="text-gray-600 text-sm mb-4 line-clamp-2 flex-grow">
-                {agency.description}
-              </p>
-
-              <div className="flex flex-wrap gap-2 mb-4">
-                {agency.specialization.map((spec) => (
-                  <span
-                    key={spec}
-                    className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs font-medium"
+        <>
+          {/* Agencies Grid */}
+          <Grid container spacing={3}>
+            {filteredAgencies.map((agency) => (
+              <Card
+                elevation={0}
+                sx={{
+                  height: "100%",
+                  width: "100%",
+                  display: "flex",
+                  flexDirection: "column",
+                  border: 1,
+                  borderColor: "divider",
+                  borderRadius: 3,
+                  transition: "all 0.2s",
+                  "&:hover": {
+                    boxShadow: 3,
+                    transform: "translateY(-2px)",
+                  },
+                }}
+              >
+                <CardContent sx={{ p: 3, display: "flex", flexDirection: "column" }}>
+                  {/* Header with Name and Badge */}
+                  <Stack
+                    direction="row"
+                    justifyContent="space-between"
+                    alignItems="flex-start"
+                    spacing={1}
+                    sx={{ mb: 2 }}
                   >
-                    {spec}
-                  </span>
-                ))}
-              </div>
+                    <Typography
+                      variant="h6"
+                      fontWeight={700}
+                      sx={{
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        display: "-webkit-box",
+                        WebkitLineClamp: 1,
+                        WebkitBoxOrient: "vertical",
+                        flex: 1,
+                      }}
+                    >
+                      {agency.name}
+                    </Typography>
+                    {agency.isAccredited && (
+                      <CheckCircle
+                        size={28}
+                        weight="fill"
+                        style={{ color: "#2563eb", flexShrink: 0 }}
+                      />
+                    )}
+                  </Stack>
 
-              <div className="pt-4 border-t border-gray-100 flex justify-between items-center text-sm">
-                <span className="text-gray-500">{agency.location}</span>
-                <span className="font-medium text-gray-900">
-                  {agency.completedProjects} Projects
-                </span>
-              </div>
-            </div>
-          ))}
+                  {/* Rating */}
+                  <Stack direction="row" alignItems="center" spacing={0.5} sx={{ mb: 2 }}>
+                    <Star weight="fill" size={20} style={{ color: "#facc15" }} />
+                    <Typography variant="body1" fontWeight={600}>
+                      {agency.rating}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      ({agency.reviewCount} reviews)
+                    </Typography>
+                  </Stack>
 
+                  {/* Description */}
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{
+                      mb: 2,
+                      flexGrow: 1,
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      display: "-webkit-box",
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: "vertical",
+                    }}
+                  >
+                    {agency.description}
+                  </Typography>
+
+                  {/* Specializations */}
+                  <Stack direction="row" flexWrap="wrap" gap={1} sx={{ mb: 3 }}>
+                    {agency.specialization.map((spec) => (
+                      <Chip
+                        key={spec}
+                        label={spec}
+                        size="small"
+                        sx={{
+                          bgcolor: "grey.100",
+                          color: "text.primary",
+                          fontWeight: 500,
+                          fontSize: "0.75rem",
+                        }}
+                      />
+                    ))}
+                  </Stack>
+
+                  <Divider sx={{ mb: 2 }} />
+
+                  {/* Footer with Location and Projects */}
+                  <Stack
+                    direction="row"
+                    justifyContent="space-between"
+                    alignItems="center"
+                    spacing={2}
+                  >
+                    <Stack direction="row" spacing={0.5} alignItems="center">
+                      <MapPin size={16} weight="duotone" />
+                      <Typography variant="body2" color="text.secondary">
+                        {agency.location}
+                      </Typography>
+                    </Stack>
+                    <Stack direction="row" spacing={0.5} alignItems="center">
+                      <Briefcase size={16} weight="duotone" />
+                      <Typography variant="body2" fontWeight={600}>
+                        {agency.completedProjects}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Projects
+                      </Typography>
+                    </Stack>
+                  </Stack>
+                </CardContent>
+              </Card>
+            ))}
+          </Grid>
+
+          {/* Empty State */}
           {filteredAgencies.length === 0 && (
-            <div className="col-span-full text-center py-12">
-              <p className="text-gray-500">
-                No agencies found matching "{searchTerm}".
-              </p>
-            </div>
+            <Card
+              elevation={0}
+              sx={{
+                border: 2,
+                borderStyle: "dashed",
+                borderColor: "divider",
+                borderRadius: 2,
+                py: 8,
+                mt: 4,
+              }}
+            >
+              <CardContent>
+                <Typography
+                  variant="h6"
+                  color="text.secondary"
+                  align="center"
+                  gutterBottom
+                >
+                  No agencies found
+                </Typography>
+                <Typography variant="body2" color="text.secondary" align="center">
+                  No agencies found matching "{searchTerm}". Try adjusting your search.
+                </Typography>
+              </CardContent>
+            </Card>
           )}
-        </div>
+        </>
       )}
-    </div>
+    </Container>
   );
 }
