@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Navbar from "../components/Navbar";
+import { Web3Provider } from "../components/Web3Provider";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -14,13 +15,15 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="bg-gray-50 min-h-screen flex flex-col">
-        <Navbar />
-        <main className="app-container flex-grow">{children}</main>
-        <footer className="bg-white border-t border-gray-200 mt-auto">
-          <div className="app-container py-6 text-center text-sm text-gray-500">
-            &copy; {new Date().getFullYear()} Attest. All rights reserved.
-          </div>
-        </footer>
+        <Web3Provider>
+          <Navbar />
+          <main className="app-container flex-grow">{children}</main>
+          <footer className="bg-white border-t border-gray-200 mt-auto">
+            <div className="app-container py-6 text-center text-sm text-gray-500">
+              &copy; {new Date().getFullYear()} Attest. All rights reserved.
+            </div>
+          </footer>
+        </Web3Provider>
       </body>
     </html>
   );

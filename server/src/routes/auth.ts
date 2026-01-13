@@ -3,6 +3,80 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import type { SignUpRequest } from "../models/auth";
 import { Collection, ObjectId } from "mongodb";
+import { verifyMessage } from "viem";
+
+export const getNonceHandler = async () => {
+	return {
+		success: true,
+		data: {
+			nonce: Math.random().toString(36).substring(2, 15),
+		},
+		error: null,
+		message: "Nonce generated successfully",
+	};
+};
+
+export const verifySignatureHandler = async ({
+	store,
+	body,
+	cookie: { token },
+}: any) => {
+	const { address, signature, nonce } = body;
+
+	const message = `Sign in to Attest with your wallet. Nonce: ${nonce}`;
+
+	const isValid = await verifyMessage({
+		address,
+		message,
+		signature,
+	});
+
+	if (!isValid) {
+		return {
+			success: false,
+			error: "Invalid signature",
+			data: null,
+			message: "Verification failed",
+		};
+	}
+
+	const database = store.state.db;
+	const userCollection = database.collection("user");
+
+	let user = await userCollection.findOne({ walletAddress: address.toLowerCase() });
+	
+	if (!user) {
+		// If user doesn't exist, we might want to create a default "Agency" or just fail
+		// For now, let's create a default Agency if not found, or maybe just fail if it's supposed to be restricted
+		// User said "agency can be created by the government", so let's fail if not found.
+		return {
+			success: false,
+			error: "User not registered",
+			data: null,
+			message: "This wallet address is not registered in the system.",
+		};
+	}
+
+	const jwtToken = jwt.sign(
+		{ id: user._id.toString(), email: user.email, role: user.role, address: address.toLowerCase() },
+		store.state.jwtSecret,
+		{ expiresIn: "1h" },
+	);
+	token.value = jwtToken;
+	token.httpOnly = true;
+	token.path = "/";
+	token.set({
+		secure: process.env.NODE_ENV === "production",
+		maxAge: 60 * 60 * 24 * 7,
+	});
+
+	return {
+		success: true,
+		data: { role: user.role, email: user.email, name: user.name, address: user.walletAddress },
+		error: null,
+		message: "Signed in successfully",
+	};
+};
 
 export const signInHandler = async ({
 	store,
