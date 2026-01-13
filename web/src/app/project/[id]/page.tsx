@@ -796,7 +796,7 @@ const ProposalDetailsView = ({
               color="success"
               icon={<CheckCircle size={16} weight="fill" />}
             />
-            {userRole === "Government" && (
+            {userRole === "Agency" && (
               <Button
                 variant="contained"
                 color="primary"
