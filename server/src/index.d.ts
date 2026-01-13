@@ -650,6 +650,50 @@ declare const app: Elysia<"", {
         ":project_id": {
             proposal: {
                 ":proposal_id": {
+                    phases: {
+                        get: {
+                            body: unknown;
+                            params: {
+                                proposal_id: string;
+                                project_id: string;
+                            } & {};
+                            query: unknown;
+                            headers: unknown;
+                            response: {
+                                200: {
+                                    success: boolean;
+                                    data: null;
+                                    error: string;
+                                    message: string;
+                                } | {
+                                    success: boolean;
+                                    data: {
+                                        phases: import("mongodb").WithId<import("bson").Document>[];
+                                    };
+                                    error: null;
+                                    message: string;
+                                };
+                                422: {
+                                    type: "validation";
+                                    on: string;
+                                    summary?: string;
+                                    message?: string;
+                                    found?: unknown;
+                                    property?: string;
+                                    expected?: string;
+                                };
+                            };
+                        };
+                    };
+                };
+            };
+        };
+    };
+} & {
+    project: {
+        ":project_id": {
+            proposal: {
+                ":proposal_id": {
                     phase: {
                         register: {
                             post: {

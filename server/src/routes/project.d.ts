@@ -135,3 +135,16 @@ export declare const acceptProjectPhaseHandler: ({ store, cookie: { token }, par
         proposal_id: string;
     };
 }>;
+export declare const getProjectProposalPhasesHandler: ({ store, params: { project_id, proposal_id }, }: any) => Promise<{
+    success: boolean;
+    data: null;
+    error: string;
+    message: string;
+} | {
+    success: boolean;
+    data: {
+        phases: import("mongodb").WithId<import("bson").Document>[];
+    };
+    error: null;
+    message: string;
+}>;
