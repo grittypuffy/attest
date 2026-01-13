@@ -7,7 +7,6 @@ import { useAccount, useSwitchChain, usePublicClient, useWalletClient } from "wa
 import { encodeFunctionData, parseGwei, getAddress, hexToNumber } from "viem";
 import { ACTIVE_CHAIN_ID, ATTEST_MANAGER_ADDRESS } from "@/lib/constants";
 import AttestManagerABI from "@/abi/AttestManager.json";
-import { initMetrics } from "~/server/src/services/metrics";
 
 export default function CreateAgencyPage() {
   const router = useRouter();
@@ -101,7 +100,7 @@ export default function CreateAgencyPage() {
       }
 
       if (data && data.success) {
-        const _res = await initMetrics(data.data.agency_id);
+        const _res = await api.metrics.init({agency_id: data.data.agency_id}).get();
         router.push("/government");
       } else if (!error) {
          // If error wasn't set above but success is false
