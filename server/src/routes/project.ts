@@ -226,7 +226,7 @@ export const registerProposalPhasesHandler = async ({
 		}
 		return {
 			success: true,
-			data: result.insertedCount,
+			data: result.insertedIds,
 			error: null,
 			message: "Phases created successfully",
 		};
@@ -471,3 +471,52 @@ export const acceptProjectPhaseHandler = async ({
 		};
 	}
 };
+
+/*export const getProjectProposalPhasesHandler = async ({
+	store,
+	params: { project_id, proposal_id },
+}: any) => {
+	const proposalCollection: Collection = store.state.proposalCollection;
+	const phaseCollection: Collection = store.state.phaseCollection;
+	const proposal = await proposalCollection
+		.findOne({
+			project_id: new ObjectId(project_id),
+			_id: new ObjectId(proposal_id)
+		});
+	if (!proposal) return {
+		success: false,
+		data: null,
+		error: "Proposal not found",
+		message: "Proposal does not exist",
+	};
+		const phases = await phaseCollection
+					.find({
+						proposal_id: { $in: [proposal?._id] },
+					})
+				.toArray();
+			const { _id, ...proposalData } = proposal;
+			return {
+				...proposalData,
+				agency_id: proposal.agency_id.toString(),
+				proposal_id: _id.toString(),
+				project_id: proposal.project_id.toString(),
+				onchain_id: proposal.onchain_id,
+				phases: phases,
+			};
+		}),
+	);
+
+	return {
+		success: true,
+		data: proposalMeta.map((proposal) => ({
+			...proposal,
+			agency_id: proposal.agency_id.toString(),
+			proposal_id: proposal.proposal_id,
+			project_id: proposal.project_id.toString(),
+			onchain_id: proposal.onchain_id,
+		})),
+		error: null,
+		message: "Proposals fetched successfully",
+	};
+};
+*/
