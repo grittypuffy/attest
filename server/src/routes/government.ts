@@ -2,6 +2,7 @@ import type { Context } from "elysia";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import type { SignUpRequest } from "../models/auth";
+import { Collection } from "mongodb";
 
 export const createAgencyHandler = async ({
 	store,
@@ -25,7 +26,7 @@ export const createAgencyHandler = async ({
 				message: "Not found",
 			};
 		const signUpData = body as typeof SignUpRequest;
-		const userCollection = store.state.userCollection;
+		const userCollection: Collection = store.state.userCollection;
 
 		const existingUser = await userCollection.findOne({
 			email: signUpData.email,
@@ -41,7 +42,7 @@ export const createAgencyHandler = async ({
 		const salt = await bcrypt.genSalt(10);
 		const passwordHash = await bcrypt.hash(signUpData.password, salt);
 
-		const _result = await userCollection.insertOne({
+		const result = await userCollection.insertOne({
 			email: signUpData.email,
 			password: passwordHash,
 			name: signUpData.name,
@@ -52,7 +53,9 @@ export const createAgencyHandler = async ({
 
 		return {
 			success: true,
-			data: null,
+			data: {
+				agency_id: result.insertedId.toString()
+			},
 			error: null,
 			message: "Agency created successfully",
 		};

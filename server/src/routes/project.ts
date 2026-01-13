@@ -1,16 +1,14 @@
-import type { Context } from "elysia";
-import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import type { SignUpRequest } from "../models/auth";
-import {
+import type {
 	AcceptProjectPhaseRequest,
 	AcceptProjectProposalRequest,
 	CreateProjectPhasesRequest,
 	CreateProjectProposalRequest,
 	CreateProjectRequest,
 } from "../models/project";
-import { Collection, ObjectId } from "mongodb";
+import { type Collection, ObjectId } from "mongodb";
 import { generateSummary } from "../services/suggestions";
+import { onProposalAccepted } from "../services/metrics";
 
 export const createProjectHandler = async ({
 	store,
@@ -389,6 +387,7 @@ export const acceptProjectProposalHandler = async ({
 				},
 			},
 		);
+		await onProposalAccepted(acceptProposalData.proposal_id);
 		return {
 			success: true,
 			error: null,
