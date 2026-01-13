@@ -98,6 +98,7 @@ export default function CreateProposalPage({
   return (
     <div className="max-w-3xl mx-auto p-6">
       <button
+      type="button"
         onClick={() => router.back()}
         className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 transition-colors"
       >

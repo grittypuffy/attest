@@ -495,15 +495,15 @@ const SubmitProposalForm = ({ projectId, projectOnchainId }: { projectId: string
               />
 
               <TextField
-                label="Summary"
-                name="summary"
+                label="Expected Outcome"
+                name="outcome"
                 multiline
                 rows={3}
                 fullWidth
-                value={formData.summary}
+                value={formData.outcome}
                 onChange={handleChange}
                 variant="outlined"
-                helperText="Brief overview of the proposal"
+                helperText="Expected proposal's outcome"
               />
 
               <Grid container spacing={2}>
@@ -561,18 +561,6 @@ const SubmitProposalForm = ({ projectId, projectOnchainId }: { projectId: string
                     onChange={handleChange}
                     variant="outlined"
                     inputProps={{ min: 1 }}
-                  />
-                </Grid>
-
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <TextField
-                    label="Expected Outcome"
-                    name="outcome"
-                    required
-                    fullWidth
-                    value={formData.outcome}
-                    onChange={handleChange}
-                    variant="outlined"
                   />
                 </Grid>
               </Grid>
