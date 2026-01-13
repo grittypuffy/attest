@@ -73,23 +73,18 @@ export default function ProjectPage({
         ]);
 
         if (projectRes.error) {
+          console.error("API Error fetching project:", projectRes.error);
           setError("Failed to fetch project data");
           return;
         }
 
-        if (proposalsRes.error) {
-          setError("Failed to fetch project proposals");
-          return;
-        }
-
         if (projectRes.data?.data) {
-          setProject(projectRes.data.data);
-          console.log("Fetched project:", projectRes.data.data);
+          const projectData = projectRes.data.data as any;
+          setProject(projectData);
         }
 
         if (proposalsRes.data?.data) {
           setProposals(proposalsRes.data.data as any);
-          // setProposals(PHASES);
           console.log("Fetched proposals:", proposalsRes.data.data);
         }
       } catch (err) {
@@ -156,7 +151,6 @@ const ProjectDetails = ({
   selectedProposal: Proposal | null;
   onSelectProposal: (proposal: Proposal | null) => void;
 }) => {
-  console.log("Rendering ProjectDetails with project:", project);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [selectedTab, setSelectedTab] = useState<number>(0);
   const [user, setUser] = useState<User | null>(null);
@@ -233,19 +227,14 @@ const ProjectDetails = ({
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
       {/* Project Header */}
-      <Card elevation={1} sx={{ mb: 4, borderRadius: 2 }}>
-        <CardContent sx={{ p: 4 }}>
-          <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 2 }}>
-            <Folder size={32} weight="duotone" />
-            <Typography variant="h4" fontWeight={700}>
-              {project.project_name}
-            </Typography>
-          </Stack>
-          <Typography variant="body1" color="text.secondary" sx={{ fontSize: "1.1rem" }}>
-            {project.description}
-          </Typography>
-        </CardContent>
-      </Card>
+      <div className="mb-6 bg-white rounded-lg shadow-sm p-6">
+        <div className="flex justify-between items-start mb-4">
+          <h1 className="text-3xl font-bold text-gray-900">
+            {project.project_name}
+          </h1>
+        </div>
+        <p className="text-gray-700 text-lg">{project.description}</p>
+      </div>
 
       {/* Tabs Navigation */}
       <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
@@ -384,7 +373,10 @@ const SubmitProposalForm = ({ projectId, projectOnchainId }: { projectId: string
 
     try {
       if (!walletClient) throw new Error("Wallet not connected");
-      if (typeof projectOnchainId === 'undefined') throw new Error("Project on-chain ID missing");
+      
+      if (projectOnchainId === null || typeof projectOnchainId === 'undefined') {
+        throw new Error("Project on-chain ID is missing");
+      }
 
       // 0. Network Sync
       if (chainId !== ACTIVE_CHAIN_ID) {
@@ -394,7 +386,6 @@ const SubmitProposalForm = ({ projectId, projectOnchainId }: { projectId: string
       }
 
       // 1. On-Chain Transaction: submitProposal(uint256 projectId, string metadataURI, PhaseInput[] phases)
-      // For now, we'll create simple phases based on no_of_phases
       const phaseBudget = parseEther((payload.total_budget / payload.no_of_phases).toString());
       const phases = Array.from({ length: payload.no_of_phases }, (_, i) => ({
         description: `Phase ${i + 1}`,
@@ -422,7 +413,6 @@ const SubmitProposalForm = ({ projectId, projectOnchainId }: { projectId: string
 
       let onchainProposalId: number | undefined;
       if (receipt.logs.length > 0) {
-        // More robust: find the log that has 3 topics (ProposalSubmitted signature + 2 indexed params)
         const proposalLog = receipt.logs.find(l => l.topics.length >= 2);
         if (proposalLog && proposalLog.topics[1]) {
           onchainProposalId = hexToNumber(proposalLog.topics[1]);

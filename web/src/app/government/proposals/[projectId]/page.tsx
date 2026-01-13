@@ -8,6 +8,7 @@ import { useAccount, useSwitchChain, useWalletClient } from "wagmi";
 import { encodeFunctionData, parseGwei } from "viem";
 import { ACTIVE_CHAIN_ID, ATTEST_MANAGER_ADDRESS } from "@/lib/constants";
 import AttestManagerABI from "@/abi/AttestManager.json";
+import Editor from "@components/Editor";
 
 interface Proposal {
   proposal_id: string;
@@ -19,6 +20,7 @@ interface Proposal {
   description: string;
   status: string;
   onchain_id?: number;
+  outcome: string;
 }
 
 export default function ProjectProposalsPage({
@@ -59,6 +61,18 @@ export default function ProjectProposalsPage({
     }
   }, [projectId]);
 
+  const renderDescription = (description: string) => {
+    try {
+      const parsed = JSON.parse(description);
+      if (parsed && typeof parsed === 'object' && parsed.blocks) {
+        return <Editor data={parsed} />;
+      }
+      return <p className="text-gray-700">{description}</p>;
+    } catch (e) {
+      return <p className="text-gray-700">{description}</p>;
+    }
+  };
+
   const handleApprove = async (proposalId: string) => {
     if (!walletClient) {
       alert("Please connect your wallet first");
@@ -87,11 +101,14 @@ export default function ProjectProposalsPage({
       }
       
       const proposal = proposals.find(p => p.proposal_id === proposalId)!;
+      if (proposal.onchain_id === null || typeof proposal.onchain_id === 'undefined') {
+        throw new Error("On-chain ID is missing for this proposal");
+      }
 
       const encodedData = encodeFunctionData({
         abi: AttestManagerABI,
         functionName: "approveProposal",
-        args: [BigInt(proposal.onchain_id!)], 
+        args: [BigInt(proposal.onchain_id)], 
       });
 
       const hash = await walletClient.sendTransaction({
@@ -199,15 +216,17 @@ export default function ProjectProposalsPage({
                   <span className="font-semibold block text-gray-900">
                     Outcome:
                   </span>
-                  {/* Assuming outcome field exists based on model, otherwise description */}
-                  {/* proposal.outcome */} N/A
+                  {proposal.outcome || 'N/A'}
                 </div>
               </div>
 
               <div className="mt-4">
-                <p className="text-gray-700">{proposal.description}</p>
+                <div className="bg-white border border-gray-100 p-4 rounded-lg">
+                  <h4 className="text-sm font-semibold text-gray-900 mb-2">Proposal Details:</h4>
+                  {renderDescription(proposal.description)}
+                </div>
                 {proposal.summary && (
-                  <p className="text-gray-500 mt-2 text-sm italic">
+                  <p className="text-gray-500 mt-3 text-sm italic border-l-4 border-blue-200 pl-3">
                     {proposal.summary}
                   </p>
                 )}

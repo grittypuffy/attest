@@ -10,6 +10,7 @@ import {
   ListItemButton,
   ListItemText,
   Paper,
+  Stack,
   Tab,
   Tabs,
   TextField,
@@ -23,6 +24,7 @@ interface ExtendedProposal extends Proposal {
   project_name: string;
   project_description: string;
   proposal_description: any;
+  phases: any[];
 }
 
 const Editor = dynamic(() => import("@components/agency/ProposalEditor"), {
@@ -130,6 +132,7 @@ export default function AgencyProposalView() {
             <Tabs value={tab} onChange={(_, v) => setTab(v)}>
               <Tab label="Overview" />
               <Tab label="Proposal Plan" />
+              <Tab label="Phases" />
             </Tabs>
 
             {/* Content */}
@@ -205,6 +208,99 @@ export default function AgencyProposalView() {
 
               {tab === 1 && (
                 <Editor data={selectedProposal.proposal_description} />
+              )}
+
+              {tab === 2 && (
+                <Box>
+                  <Typography variant="h6" fontWeight={600} mb={2}>
+                    Project Implementation Phases
+                  </Typography>
+                  {!selectedProposal.phases || selectedProposal.phases.length === 0 ? (
+                    <Paper
+                      variant="outlined"
+                      sx={{
+                        p: 4,
+                        textAlign: "center",
+                        bgcolor: "grey.50",
+                        borderStyle: "dashed",
+                      }}
+                    >
+                      <Typography color="text.secondary">
+                        No phases have been registered for this proposal yet.
+                      </Typography>
+                    </Paper>
+                  ) : (
+                    <Stack spacing={3}>
+                      {selectedProposal.phases.map((phase: any, idx: number) => (
+                        <Paper
+                          key={phase._id || idx}
+                          variant="outlined"
+                          sx={{ p: 3, borderRadius: 2 }}
+                        >
+                          <Box
+                            display="flex"
+                            justifyContent="between"
+                            alignItems="flex-start"
+                            mb={2}
+                          >
+                            <Box flex={1}>
+                              <Box display="flex" alignItems="center" gap={1} mb={0.5}>
+                                <Chip
+                                  label={`Phase ${phase.number || idx + 1}`}
+                                  size="small"
+                                  color="primary"
+                                  variant="outlined"
+                                />
+                                <Typography variant="subtitle1" fontWeight={700}>
+                                  {phase.title}
+                                </Typography>
+                              </Box>
+                              <Typography variant="body2" color="text.secondary">
+                                {phase.description}
+                              </Typography>
+                            </Box>
+                            <Box textAlign="right">
+                              <Typography fontWeight={700} color="primary.main">
+                                ₹{phase.budget?.toLocaleString()}
+                              </Typography>
+                              <Chip
+                                label={phase.status || "Pending"}
+                                size="small"
+                                sx={{ mt: 1 }}
+                                color={
+                                  phase.status === "Completed"
+                                    ? "success"
+                                    : phase.status === "In Progress"
+                                    ? "info"
+                                    : "default"
+                                }
+                              />
+                            </Box>
+                          </Box>
+
+                          <Grid container spacing={2}>
+                            <Grid size={6}>
+                              <Typography variant="caption" color="text.secondary">
+                                Start Date
+                              </Typography>
+                              <Typography variant="body2">
+                                {phase.start_date ? new Date(phase.start_date).toLocaleDateString() : "N/A"}
+                              </Typography>
+                            </Grid>
+                            <Grid size={6}>
+                              <Typography variant="caption" color="text.secondary">
+                                End Date
+                              </Typography>
+                              <Typography variant="body2">
+                                {phase.end_date ? new Date(phase.end_date).toLocaleDateString() : "N/A"}
+                              </Typography>
+                            </Grid>
+                          </Grid>
+                        </Paper>
+                      ))}
+                    </Stack>
+                  )}
+                </Box>
               )}
             </Box>
           </>

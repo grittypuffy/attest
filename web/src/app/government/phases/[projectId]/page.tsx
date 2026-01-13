@@ -30,11 +30,14 @@ export default function ProjectPhasesPage({
   const { data: walletClient } = useWalletClient();
   const { switchChain } = useSwitchChain();
 
+  const [onchainId, setOnchainId] = useState<number | null>(null);
+
   const load = async () => {
     const { data } = await api.project({ project_id: projectId }).proposal.all.get();
-    const accepted = data?.data?.find((p: any) => p.status === "Accepted");
+    const accepted: any = data?.data?.find((p: any) => p.status === "Accepted");
     setPhases(accepted?.phases ?? []);
     setProposalId(accepted?.proposal_id ?? null);
+    setOnchainId(accepted?.onchain_id ?? null);
   };
 
   useEffect(() => { load(); }, []);
@@ -48,14 +51,14 @@ export default function ProjectPhasesPage({
 
   /* ----------------- OFF-CHAIN ACCEPT ----------------- */
   const acceptPhase = async () => {
-    if (!proposalId) return;
+    if (!proposalId || nextIndex === -1) return;
     setLoading(true);
 
     try {
       await api
         .project({ project_id: projectId })
         .proposal({ proposal_id: proposalId })
-        .phase.accept.post({});
+        .phase.accept.post({ phase_id: phases[nextIndex]._id });
       await load();
     } catch {
       alert("Phase accept failed");
@@ -67,6 +70,10 @@ export default function ProjectPhasesPage({
   /* ----------------- ON-CHAIN RELEASE ----------------- */
   const releaseFunds = async (phaseId: string) => {
     if (!walletClient || !proposalId) return;
+    if (onchainId === null) {
+      alert("Proposal on-chain ID missing");
+      return;
+    }
 
     if (chainId !== ACTIVE_CHAIN_ID) {
       switchChain({ chainId: ACTIVE_CHAIN_ID });
@@ -76,10 +83,14 @@ export default function ProjectPhasesPage({
     setProcessingId(phaseId);
 
     try {
+      if (onchainId === null || typeof onchainId === 'undefined') {
+        throw new Error("On-chain ID is missing");
+      }
+
       const data = encodeFunctionData({
         abi: AttestManagerABI,
         functionName: "verifyAndReleasePhase",
-        args: [BigInt(proposalId)],
+        args: [BigInt(onchainId)],
       });
 
       await walletClient.sendTransaction({

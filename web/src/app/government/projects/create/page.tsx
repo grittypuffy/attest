@@ -58,13 +58,16 @@ export default function CreateProjectPage() {
       // Wait for receipt to get the project ID from events
       if (!publicClient) throw new Error("Public client missing");
       const receipt = await publicClient.waitForTransactionReceipt({ hash });
+      console.log("Transaction Receipt Logs:", receipt.logs);
       
       // Extract projectId from logs (ProjectCreated event)
       let onchainId: number | undefined;
       if (receipt.logs.length > 0) {
         const projectLog = receipt.logs.find(l => l.topics.length >= 2);
+        console.log("Found Project Log Candidate:", projectLog);
         if (projectLog && projectLog.topics[1]) {
           onchainId = hexToNumber(projectLog.topics[1]);
+          console.log("Extracted On-chain ID:", onchainId);
         }
       }
 
