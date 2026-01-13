@@ -10,6 +10,8 @@ export declare const createProjectHandler: ({ store, body, cookie: { token }, }:
         project_name: any;
         project_id: string;
         description: string | undefined;
+        budget: any;
+        onchain_id: any;
     };
     error: null;
     message: string;
@@ -25,6 +27,7 @@ export declare const getProjectHandler: ({ store, params: { project_id }, }: any
         project_name: any;
         project_id: string;
         description: any;
+        onchain_id: any;
     };
     error: null;
     message: string;
@@ -35,16 +38,12 @@ export declare const getAllProjectsHandler: ({ store }: any) => Promise<{
         project_name: any;
         project_id: string;
         description: any;
+        onchain_id: any;
     }[];
     error: null;
     message: string;
 }>;
 export declare const registerProjectProposalHandler: ({ store, cookie: { token }, params: { project_id }, body, }: any) => Promise<{
-    error: string;
-    data: null;
-    success: boolean;
-    message: string;
-} | {
     success: boolean;
     data: {
         project_id: ObjectId;
@@ -56,11 +55,17 @@ export declare const registerProjectProposalHandler: ({ store, cookie: { token }
         no_of_phases: any;
         outcome: any;
         description: string | undefined;
+        onchain_id: any;
         status: string;
         proposal_id: string;
     };
     error: null;
     message: string;
+} | {
+    error: any;
+    message: string;
+    data: null;
+    success: boolean;
 }>;
 export declare const registerProposalPhasesHandler: ({ store, cookie: { token }, params: { project_id, proposal_id }, body, }: any) => Promise<{
     error: string;
@@ -69,7 +74,9 @@ export declare const registerProposalPhasesHandler: ({ store, cookie: { token },
     message: string;
 } | {
     success: boolean;
-    data: number;
+    data: {
+        [key: number]: ObjectId;
+    };
     error: null;
     message: string;
 }>;
@@ -84,6 +91,7 @@ export declare const getProjectProposalHandler: ({ store, params: { proposal_id 
         agency_id: any;
         proposal_id: string;
         project_id: any;
+        onchain_id: any;
         phases: import("mongodb").WithId<import("bson").Document>[];
     };
     error: null;
@@ -95,6 +103,7 @@ export declare const getProjectProposalsHandler: ({ store, params: { project_id 
         agency_id: any;
         proposal_id: string;
         project_id: any;
+        onchain_id: any;
         phases: import("mongodb").WithId<import("bson").Document>[];
     }[];
     error: null;

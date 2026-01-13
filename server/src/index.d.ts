@@ -1,5 +1,7 @@
 import { Elysia } from "elysia";
+import { type Db } from "mongodb";
 import type AppState from "./config";
+export declare const db: Db;
 declare const app: Elysia<"", {
     decorator: {};
     store: {
@@ -84,6 +86,78 @@ declare const app: Elysia<"", {
     };
 } & {
     auth: {
+        request_nonce: {
+            post: {
+                body: {
+                    address: string;
+                };
+                params: {};
+                query: unknown;
+                headers: unknown;
+                response: {
+                    200: {
+                        success: boolean;
+                        data: {
+                            nonce: string;
+                        };
+                        message: string;
+                    };
+                    422: {
+                        type: "validation";
+                        on: string;
+                        summary?: string;
+                        message?: string;
+                        found?: unknown;
+                        property?: string;
+                        expected?: string;
+                    };
+                };
+            };
+        };
+    };
+} & {
+    auth: {
+        verify_signature: {
+            post: {
+                body: {
+                    address: string;
+                    signature: string;
+                    nonce: string;
+                };
+                params: {};
+                query: unknown;
+                headers: unknown;
+                response: {
+                    200: {
+                        error: string;
+                        success: boolean;
+                        data?: undefined;
+                        message?: undefined;
+                    } | {
+                        success: boolean;
+                        data: {
+                            role: any;
+                            email: any;
+                            name: any;
+                        };
+                        error: null;
+                        message: string;
+                    };
+                    422: {
+                        type: "validation";
+                        on: string;
+                        summary?: string;
+                        message?: string;
+                        found?: unknown;
+                        property?: string;
+                        expected?: string;
+                    };
+                };
+            };
+        };
+    };
+} & {
+    auth: {
         user: {
             get: {
                 body: unknown;
@@ -104,6 +178,7 @@ declare const app: Elysia<"", {
                             role: any;
                             name: any;
                             address: any;
+                            walletAddress: any;
                         };
                         error: null;
                         message: string;
@@ -212,6 +287,7 @@ declare const app: Elysia<"", {
                             role: any;
                             name: any;
                             address: any;
+                            walletAddress: any;
                         };
                         error: null;
                         message: string;
@@ -271,8 +347,53 @@ declare const app: Elysia<"", {
                         password: string;
                         name: string;
                         address: string;
+                        walletAddress: string;
                     };
                     params: {};
+                    query: unknown;
+                    headers: unknown;
+                    response: {
+                        200: {
+                            error: string;
+                            data?: undefined;
+                            success?: undefined;
+                            message?: undefined;
+                        } | {
+                            error: string;
+                            data: null;
+                            success: boolean;
+                            message: string;
+                        } | {
+                            success: boolean;
+                            data: {
+                                agency_id: string;
+                            };
+                            error: null;
+                            message: string;
+                        };
+                        422: {
+                            type: "validation";
+                            on: string;
+                            summary?: string;
+                            message?: string;
+                            found?: unknown;
+                            property?: string;
+                            expected?: string;
+                        };
+                    };
+                };
+            };
+        };
+    };
+} & {
+    metrics: {
+        init: {
+            ":agency_id": {
+                get: {
+                    body: unknown;
+                    params: {
+                        agency_id: string;
+                    } & {};
                     query: unknown;
                     headers: unknown;
                     response: {
@@ -283,14 +404,11 @@ declare const app: Elysia<"", {
                             message: string;
                         } | {
                             success: boolean;
-                            data: null;
+                            data: {
+                                upserted_id: string | undefined;
+                            };
                             error: null;
                             message: string;
-                        } | {
-                            error: string;
-                            data?: undefined;
-                            success?: undefined;
-                            message?: undefined;
                         };
                         422: {
                             type: "validation";
@@ -311,6 +429,8 @@ declare const app: Elysia<"", {
         create: {
             post: {
                 body: {
+                    budget?: string | undefined;
+                    onchain_id?: number | undefined;
                     project_name: string;
                     description: string;
                 };
@@ -329,6 +449,8 @@ declare const app: Elysia<"", {
                             project_name: any;
                             project_id: string;
                             description: string | undefined;
+                            budget: any;
+                            onchain_id: any;
                         };
                         error: null;
                         message: string;
@@ -361,6 +483,7 @@ declare const app: Elysia<"", {
                             project_name: any;
                             project_id: string;
                             description: any;
+                            onchain_id: any;
                         }[];
                         error: null;
                         message: string;
@@ -400,6 +523,7 @@ declare const app: Elysia<"", {
                             project_name: any;
                             project_id: string;
                             description: any;
+                            onchain_id: any;
                         };
                         error: null;
                         message: string;
@@ -424,6 +548,7 @@ declare const app: Elysia<"", {
                 register: {
                     post: {
                         body: {
+                            onchain_id?: number | undefined;
                             summary?: string | undefined;
                             description: string;
                             proposal_name: string;
@@ -439,11 +564,6 @@ declare const app: Elysia<"", {
                         headers: unknown;
                         response: {
                             200: {
-                                error: string;
-                                data: null;
-                                success: boolean;
-                                message: string;
-                            } | {
                                 success: boolean;
                                 data: {
                                     project_id: import("bson").ObjectId;
@@ -455,11 +575,17 @@ declare const app: Elysia<"", {
                                     no_of_phases: any;
                                     outcome: any;
                                     description: string | undefined;
+                                    onchain_id: any;
                                     status: string;
                                     proposal_id: string;
                                 };
                                 error: null;
                                 message: string;
+                            } | {
+                                error: any;
+                                message: string;
+                                data: null;
+                                success: boolean;
                             };
                             422: {
                                 type: "validation";
@@ -499,6 +625,7 @@ declare const app: Elysia<"", {
                                 agency_id: any;
                                 proposal_id: string;
                                 project_id: any;
+                                onchain_id: any;
                                 phases: import("mongodb").WithId<import("bson").Document>[];
                             };
                             error: null;
@@ -531,8 +658,8 @@ declare const app: Elysia<"", {
                                         validating_documents?: string[] | undefined;
                                         number: string;
                                         description: string;
-                                        title: string;
                                         budget: number;
+                                        title: string;
                                         start_date: string;
                                         end_date: string;
                                     }[];
@@ -551,7 +678,9 @@ declare const app: Elysia<"", {
                                         message: string;
                                     } | {
                                         success: boolean;
-                                        data: number;
+                                        data: {
+                                            [key: number]: import("bson").ObjectId;
+                                        };
                                         error: null;
                                         message: string;
                                     };
@@ -591,6 +720,7 @@ declare const app: Elysia<"", {
                                     agency_id: any;
                                     proposal_id: string;
                                     project_id: any;
+                                    onchain_id: any;
                                     phases: import("mongodb").WithId<import("bson").Document>[];
                                 }[];
                                 error: null;
@@ -660,7 +790,9 @@ declare const app: Elysia<"", {
                     phase: {
                         accept: {
                             post: {
-                                body: unknown;
+                                body: {
+                                    phase_id: string;
+                                };
                                 params: {
                                     proposal_id: string;
                                     project_id: string;
@@ -693,6 +825,47 @@ declare const app: Elysia<"", {
                                 };
                             };
                         };
+                    };
+                };
+            };
+        };
+    };
+} & {
+    agency: {
+        all: {
+            get: {
+                body: unknown;
+                params: {};
+                query: unknown;
+                headers: unknown;
+                response: {
+                    200: {
+                        success: boolean;
+                        data: {
+                            id: string;
+                            name: any;
+                            email: any;
+                            address: any;
+                            walletAddress: any;
+                            rating: any;
+                            reviewCount: any;
+                            isAccredited: any;
+                            specialization: any;
+                            location: any;
+                            completedProjects: any;
+                            description: any;
+                        }[];
+                        error: null;
+                        message: string;
+                    };
+                    422: {
+                        type: "validation";
+                        on: string;
+                        summary?: string;
+                        message?: string;
+                        found?: unknown;
+                        property?: string;
+                        expected?: string;
                     };
                 };
             };

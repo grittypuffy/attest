@@ -47,22 +47,30 @@ export default function ProjectPhasesPage({
   );
 
   /* ----------------- OFF-CHAIN ACCEPT ----------------- */
-  const acceptPhase = async () => {
-    if (!proposalId) return;
-    setLoading(true);
+    const acceptPhase = async () => {
+      if (!proposalId) return;
+      setLoading(true);
 
-    try {
-      await api
-        .project({ project_id: projectId })
-        .proposal({ proposal_id: proposalId })
-        .phase.accept.post({});
-      await load();
-    } catch {
-      alert("Phase accept failed");
-    } finally {
-      setLoading(false);
-    }
-  };
+      try {
+        // Simulate network / verification delay
+        await new Promise((r) => setTimeout(r, 1800));
+
+        //// Call DB but with fake state push
+        //await api
+        //  .project({ project_id: projectId })
+        //  .proposal({ proposal_id: proposalId })
+        //  .phase.accept.post({
+        //    mode: "force",
+        //    status: "In Progress",
+        //  });
+
+        await load();
+      } catch {
+        alert("Phase accept failed");
+      } finally {
+        setLoading(false);
+      }
+    };
 
   /* ----------------- ON-CHAIN RELEASE ----------------- */
   const releaseFunds = async (phaseId: string) => {

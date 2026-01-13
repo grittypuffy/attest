@@ -1,4 +1,26 @@
-export declare const signInHandler: ({ store, body, cookie: { token }, }: any) => Promise<{
+export declare const requestNonceHandler: ({ body }: any) => Promise<{
+    success: boolean;
+    data: {
+        nonce: string;
+    };
+    message: string;
+}>;
+export declare const verifySignatureHandler: ({ store, body, cookie: { token }, set, }: any) => Promise<{
+    error: string;
+    success: boolean;
+    data?: undefined;
+    message?: undefined;
+} | {
+    success: boolean;
+    data: {
+        role: any;
+        email: any;
+        name: any;
+    };
+    error: null;
+    message: string;
+}>;
+export declare const signInHandler: ({ store, body, cookie: { token }, set, }: any) => Promise<{
     error: string;
     data?: undefined;
     message?: undefined;
@@ -31,6 +53,7 @@ export declare const getAuthUserHandler: ({ store, cookie: { token } }: any) => 
         role: any;
         name: any;
         address: any;
+        walletAddress: any;
     };
     error: null;
     message: string;
@@ -48,6 +71,7 @@ export declare const getUserHandler: ({ store, params: { user_id } }: any) => Pr
         role: any;
         name: any;
         address: any;
+        walletAddress: any;
     };
     error: null;
     message: string;
