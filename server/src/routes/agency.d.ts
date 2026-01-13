@@ -26,3 +26,22 @@ export declare const getAgencyData: ({ store, params: { agency_id }, }: any) => 
     error: null;
     message: string;
 }>;
+export declare const getAllAgenciesHandler: ({ store }: any) => Promise<{
+    success: boolean;
+    data: {
+        id: string;
+        name: any;
+        email: any;
+        address: any;
+        walletAddress: any;
+        rating: any;
+        reviewCount: any;
+        isAccredited: any;
+        specialization: any;
+        location: any;
+        completedProjects: any;
+        description: any;
+    }[];
+    error: null;
+    message: string;
+}>;

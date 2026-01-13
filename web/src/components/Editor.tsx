@@ -2,6 +2,8 @@
 
 import EditorJS, { type OutputData } from "@editorjs/editorjs";
 import Header from "@editorjs/header";
+import List from "@editorjs/list";
+import NestedList from "@editorjs/nested-list";
 import { useEffect, useRef } from "react";
 
 type Props = {
@@ -18,6 +20,8 @@ const Editor = ({ data }: Props) => {
         holder: holderId,
         tools: {
           header: Header,
+          list: List,
+          nestedList: NestedList,
         },
         data: data,
         readOnly: true,

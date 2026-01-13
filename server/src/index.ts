@@ -28,6 +28,7 @@ import {
 	getAllProjectsHandler,
 	getProjectHandler,
 	getProjectProposalHandler,
+	getProjectProposalPhasesHandler,
 	getProjectProposalsHandler,
 	registerProjectProposalHandler,
 	registerProposalPhasesHandler,
@@ -241,6 +242,9 @@ const app = new Elysia()
 					})
 				}
 			)
+			.get("/:project_id/proposal/:proposal_id/phases", async ({store: {state}, params: {project_id, proposal_id}}) => {
+				return await getProjectProposalPhasesHandler({store: {state}, params: {project_id, proposal_id}})
+			})
 			.post(
 				"/:project_id/proposal/:proposal_id/phase/register",
 				async ({

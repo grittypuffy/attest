@@ -1,6 +1,8 @@
 export declare const CreateProjectRequest: import("@sinclair/typebox").TObject<{
     project_name: import("@sinclair/typebox").TString;
     description: import("@sinclair/typebox").TString;
+    budget: import("@sinclair/typebox").TOptional<import("@sinclair/typebox").TString>;
+    onchain_id: import("@sinclair/typebox").TOptional<import("@sinclair/typebox").TNumber>;
 }>;
 export declare const CreateProjectProposalRequest: import("@sinclair/typebox").TObject<{
     proposal_name: import("@sinclair/typebox").TString;
@@ -10,6 +12,7 @@ export declare const CreateProjectProposalRequest: import("@sinclair/typebox").T
     summary: import("@sinclair/typebox").TOptional<import("@sinclair/typebox").TString>;
     no_of_phases: import("@sinclair/typebox").TInteger;
     outcome: import("@sinclair/typebox").TString;
+    onchain_id: import("@sinclair/typebox").TOptional<import("@sinclair/typebox").TNumber>;
 }>;
 export declare const AcceptProjectProposalRequest: import("@sinclair/typebox").TObject<{
     proposal_id: import("@sinclair/typebox").TString;

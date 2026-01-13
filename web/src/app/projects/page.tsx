@@ -264,15 +264,6 @@ export default function ProjectsPage() {
                       {project.project_name}
                     </Typography>
                   </Box>
-
-                  <Box sx={{ textAlign: { xs: "left", md: "right" } }}>
-                    <Typography variant="h4" fontWeight={700}>
-                      {project.budget}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Budget
-                    </Typography>
-                  </Box>
                 </Stack>
 
                 {/* Project Description */}
