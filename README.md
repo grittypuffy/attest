@@ -138,6 +138,42 @@ The project uses the following technologies:
 - Inco for smart contract development with confidentiality
 - Shardeum for deployment of smart contracts for transfering funds
 
+# Screenshots
+
+## Public Pages
+
+| Home Page | Authentication Page |
+|-|-|
+| ![Home Page](./assets/home_page.png) | ![Auth Page](./assets/auth_page.png) |
+
+| Projects Page | Project Detail Page |
+|-|-|
+| ![Projects Page](./assets/projects_page.png) | ![Project Page](./assets/project_page.png) |
+
+| Agencies Page | Proposal Page |
+|-|-|
+| ![Agencies Page](./assets/agencies_page.png) | ![Proposal Page](./assets/proposal_page.png) |
+
+## Government Dashboard
+
+| Government Dashboard | Government Project Creation |
+|-|-|
+| ![Government Dashboard](./assets/government_dashboard.png) | ![Government Project Creation](./assets/government_project_creation.png) |
+
+| Government Agency Creation | Government Approved Proposals |
+|-|-|
+| ![Government Agency Creation](./assets/government_agency_creation.png) | ![Government Approved Proposals](./assets/government_approved_proposals.png) |
+
+## Agency Dashboard
+
+| Agency Dashboard | Agency Proposal List |
+|-|-|
+| ![Agency Dashboard](./assets/agency_dashboard.png) | ![Agency Proposal](./assets/agency_proposal.png) |
+
+| Agency Proposal Detail | Phase Submit Form |
+|-|-|
+| ![Agency Proposal Detail](./assets/agency_proposal_detail.png) | ![Phase Submit Form](./assets/phase_submit_form.png) |
+
 # Development
 
 The project is structured as a monorepository with the following directories:
