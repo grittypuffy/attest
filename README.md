@@ -4,6 +4,29 @@ Attest is a public procurement transparency system that helps in making informed
 
 # Table of contents
 
+1. [Why](#why)
+2. [Solution](#solution)
+3. [Working](#working)
+   - [Government Ministries](#government-ministries)
+     - [Agency Registration](#agency-registration)
+     - [Project Creation](#project-creation)
+     - [Proposal Approval](#proposal-approval)
+     - [Proof Verification](#proof-verification)
+     - [Credit Analysis](#credit-analysis)
+   - [Agencies](#agencies)
+     - [Create Proposals](#create-proposals)
+     - [Phase Creation](#phase-creation)
+     - [Proof Submission](#proof-submission)
+   - [Users](#users)
+4. [Tech Stack](#tech-stack)
+   - [Frontend](#frontend)
+   - [Backend](#backend)
+   - [Smart Contracts](#smart-contracts)
+5. [Screenshots](#screenshots)
+6. [Development](#development)
+7. [Future Enhancement](#future-enhancement)
+8. [License](#license)
+
 # Why?
 
 - **Lack of transparency** in funding mechanisms and strategy for government tenders and contracts, which results in misutilization of allocated funds (due to corruption)
@@ -133,7 +156,9 @@ For more information on getting started with contributing to the project, check 
 
 # Future enhancement
 
-
+1. Integration of pining service such as Pinata for IPFS uploads of proof of completion for phases. This ensures immutable processing of complex phase completion proofs.
+2. Extend the platform to include DAO for multi-entity validation of proof of completion to ensure accuracy (used for reliability of credit-score)
+3. Move credit tracking to on-chain for observing continuous evolution of agency, aiding better decisions.
 
 # License
 
