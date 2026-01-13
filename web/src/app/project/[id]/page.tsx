@@ -434,7 +434,7 @@ const SubmitProposalForm = ({ projectId, projectOnchainId }: { projectId: string
       }
 
       if (data?.success) {
-        setSuccess("Proposal submitted successfully on-chain and off-chain!");
+        setSuccess("Proposal submitted successfully!");
         setFormData({
           proposal_name: "",
           description: "",
