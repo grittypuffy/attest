@@ -1,192 +1,178 @@
 "use client";
 
-import { useState, useEffect, use } from "react";
+import { useEffect, useState, use } from "react";
 import { api } from "@/lib/api";
-import { CheckCircle, Clock, Money, MagnifyingGlass } from "@phosphor-icons/react/dist/ssr";
-import { useRouter } from "next/navigation";
+import {
+  CheckCircle,
+  Clock,
+  Lock,
+  Handshake,
+  Money,
+} from "@phosphor-icons/react";
 import { useWalletClient, useAccount, useSwitchChain } from "wagmi";
+import { encodeFunctionData, parseGwei } from "viem";
 import { ATTEST_MANAGER_ADDRESS, ACTIVE_CHAIN_ID } from "@/lib/constants";
 import AttestManagerABI from "@/abi/AttestManager.json";
-import { encodeFunctionData, parseGwei } from "viem";
 
-interface Phase {
-  _id: string;
-  number: number;
-  title: string;
-  description: string;
-  budget: number;
-  status: string;
-}
-
-interface Proposal {
-  proposal_id: string;
-  proposal_name: string;
-  status: string;
-  phases: Phase[];
-}
-
-export default function ProjectPhasesPage({ params }: { params: Promise<{ projectId: string }> }) {
+export default function ProjectPhasesPage({
+  params,
+}: {
+  params: Promise<{ projectId: string }>;
+}) {
   const { projectId } = use(params);
-  const [acceptedProposal, setAcceptedProposal] = useState<Proposal | null>(null);
-  const [loading, setLoading] = useState(true);
+
+  const [phases, setPhases] = useState<any[]>([]);
+  const [proposalId, setProposalId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
   const [processingId, setProcessingId] = useState<string | null>(null);
-  const router = useRouter();
 
-  const { chainId, address: userAddress } = useAccount();
-  const { switchChain } = useSwitchChain();
+  const { chainId, address } = useAccount();
   const { data: walletClient } = useWalletClient();
+  const { switchChain } = useSwitchChain();
 
-  const fetchAcceptedProposal = async () => {
+  const load = async () => {
+    const { data } = await api.project({ project_id: projectId }).proposal.all.get();
+    const accepted = data?.data?.find((p: any) => p.status === "Accepted");
+    setPhases(accepted?.phases ?? []);
+    setProposalId(accepted?.proposal_id ?? null);
+  };
+
+  useEffect(() => { load(); }, []);
+
+  // deterministic next allowed phase
+  const nextIndex = phases.findIndex(
+    (p, i) =>
+      p.status === "Not Started" &&
+      (i === 0 || phases[i - 1].status === "Completed")
+  );
+
+  /* ----------------- OFF-CHAIN ACCEPT ----------------- */
+  const acceptPhase = async () => {
+    if (!proposalId) return;
+    setLoading(true);
+
     try {
-      const { data, error } = await api.project({ project_id: projectId }).proposal.all.get();
-      if (data && !error && data.data) {
-         // Find the accepted one
-         const accepted = (data.data as any[]).find(p => p.status === 'Accepted');
-         if (accepted) {
-            // Fetch the full details including phases
-            const { data: detailData } = await api.project.proposal({ proposal_id: accepted.proposal_id }).get();
-            if (detailData?.success) {
-                setAcceptedProposal(detailData.data as any);
-            }
-         }
-      }
-    } catch (err) {
-      console.error("Failed to fetch proposal details", err);
+      await api
+        .project({ project_id: projectId })
+        .proposal({ proposal_id: proposalId })
+        .phase.accept.post({});
+      await load();
+    } catch {
+      alert("Phase accept failed");
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    if (projectId) {
-      fetchAcceptedProposal();
+  /* ----------------- ON-CHAIN RELEASE ----------------- */
+  const releaseFunds = async (phaseId: string) => {
+    if (!walletClient || !proposalId) return;
+
+    if (chainId !== ACTIVE_CHAIN_ID) {
+      switchChain({ chainId: ACTIVE_CHAIN_ID });
+      return;
     }
-  }, [projectId]);
 
-  const handleReleaseFunds = async (phaseId: string) => {
-    if (!walletClient || !acceptedProposal) return;
-    if (!confirm("Are you sure you want to verify this phase and release funds on the blockchain?")) return;
-    
     setProcessingId(phaseId);
-    try {
-      if (chainId !== ACTIVE_CHAIN_ID) {
-        switchChain({ chainId: ACTIVE_CHAIN_ID });
-        return;
-      }
 
-      // 1. On-Chain Transaction: verifyAndReleasePhase
-      // Note: Contract function 'verifyAndReleasePhase' advance the currentPhaseIndex
-      const encodedData = encodeFunctionData({
+    try {
+      const data = encodeFunctionData({
         abi: AttestManagerABI,
         functionName: "verifyAndReleasePhase",
-        args: [BigInt(acceptedProposal.proposal_id)],
+        args: [BigInt(proposalId)],
       });
 
-      const hash = await walletClient.sendTransaction({
-        account: userAddress,
+      await walletClient.sendTransaction({
+        account: address!,
         to: ATTEST_MANAGER_ADDRESS as `0x${string}`,
-        data: encodedData,
+        data,
         gas: BigInt(400000),
         gasPrice: parseGwei("25"),
         type: "legacy",
       });
 
-      console.log("Funds release transaction sent:", hash);
+      await api
+        .project({ project_id: projectId })
+        .proposal({ proposal_id: proposalId })
+        .phase.accept.post({ phase_id: phaseId });
 
-      // 2. Database Update
-      const { data } = await api.project({ project_id: projectId }).proposal({ proposal_id: acceptedProposal.proposal_id }).phase.accept.post({
-        phase_id: phaseId
-      });
-
-      if (data && data.success) {
-        alert("Phase verified and funds released successfully!");
-        fetchAcceptedProposal();
-      } else {
-        alert("Blockchain transaction confirmed, but database update failed.");
-      }
-    } catch (err: any) {
-      console.error(err);
-      alert(err.shortMessage || err.message || "An error occurred during fund release.");
+      await load();
+      alert("Phase verified & funds released");
+    } catch (e: any) {
+      alert(e.shortMessage || "Release failed");
     } finally {
       setProcessingId(null);
     }
   };
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Phase Management</h1>
-          {acceptedProposal && <p className="text-sm text-gray-500">Proposal: {acceptedProposal.proposal_name}</p>}
-        </div>
-        <button onClick={() => router.back()} className="text-sm text-gray-600 hover:text-gray-900 font-medium">
-          &larr; Back
-        </button>
-      </div>
+    <div className="max-w-3xl mx-auto">
+      <h1 className="text-2xl font-bold mb-6">Project Phases</h1>
 
-      {loading ? (
-        <div className="flex justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        </div>
-      ) : !acceptedProposal ? (
-        <div className="text-center py-12 bg-white rounded-xl border border-dashed border-gray-300">
-          <p className="text-gray-500">No accepted proposal found for this project yet.</p>
-        </div>
-      ) : (
-        <div className="space-y-6">
-          {acceptedProposal.phases.map((phase) => (
-            <div key={phase._id} className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm relative overflow-hidden">
-              <div className="flex justify-between items-start mb-4">
-                <div className="flex items-center gap-4">
-                  <div className="h-10 w-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 font-bold border border-blue-100">
-                    {phase.number}
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-gray-900">{phase.title}</h3>
-                    <div className="flex items-center gap-2 mt-1">
-                       <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
-                        phase.status === 'In Progress' ? 'bg-blue-100 text-blue-800' :
-                        phase.status === 'Completed' ? 'bg-green-100 text-green-800' :
-                        'bg-gray-100 text-gray-800'
-                      }`}>
-                        {phase.status === 'Completed' && <CheckCircle weight="fill" />}
-                        {phase.status === 'In Progress' && <Clock weight="fill" />}
-                        {phase.status}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="text-xl font-bold text-gray-900">${phase.budget.toLocaleString()}</div>
-                  <div className="text-xs text-gray-500 font-medium uppercase tracking-wider">Phase Allocation</div>
-                </div>
+      {phases.map((p, idx) => {
+        const locked = idx !== nextIndex && p.status === "Not Started";
+
+        return (
+          <div key={p._id} className="bg-white border rounded-xl p-6 mb-4">
+            <div className="flex justify-between">
+              <div>
+                <div className="text-xs text-gray-500">Phase {p.number}</div>
+                <h3 className="text-lg font-semibold">{p.title}</h3>
+
+                <span className={`inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-xs ${
+                  p.status === "Completed"
+                    ? "bg-green-100 text-green-800"
+                    : p.status === "In Progress"
+                    ? "bg-blue-100 text-blue-800"
+                    : "bg-gray-100 text-gray-700"
+                }`}>
+                  {p.status === "Completed" && <CheckCircle weight="fill" />}
+                  {p.status === "In Progress" && <Clock weight="fill" />}
+                  {p.status === "Not Started" && <Lock weight="fill" />}
+                  {p.status}
+                </span>
               </div>
 
-              <p className="text-gray-600 text-sm mb-6 bg-gray-50 p-3 rounded-lg border border-gray-100">
-                {phase.description}
-              </p>
-
-              <div className="flex justify-between items-center pt-4 border-t border-gray-100">
-                <button className="flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700">
-                  <MagnifyingGlass size={18} />
-                  Review Evidence/Proofs
-                </button>
-
-                {phase.status === 'In Progress' && (
-                  <button
-                    onClick={() => handleReleaseFunds(phase._id)}
-                    disabled={!!processingId}
-                    className="inline-flex items-center gap-2 px-4 py-2 border border-transparent text-sm font-bold rounded-lg shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 transition-all"
-                  >
-                    <Money size={18} weight="bold" />
-                    {processingId === phase._id ? "Releasing Funds..." : "Verify & Release Funds"}
-                  </button>
-                )}
-              </div>
+              <div className="text-xl font-bold">₹{p.budget}</div>
             </div>
-          ))}
-        </div>
-      )}
+
+            <p className="mt-3 text-gray-600">{p.description}</p>
+
+            {/* Accept */}
+            {idx === nextIndex && p.status === "Not Started" && (
+              <div className="mt-4 flex justify-end">
+                <button
+                  disabled={loading}
+                  onClick={acceptPhase}
+                  className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                >
+                  <Handshake weight="fill" /> Accept Phase
+                </button>
+              </div>
+            )}
+
+            {/* Release */}
+            {p.status === "In Progress" && (
+              <div className="mt-4 flex justify-end">
+                <button
+                  onClick={() => releaseFunds(p._id)}
+                  disabled={processingId === p._id}
+                  className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+                >
+                  <Money weight="fill" />
+                  {processingId === p._id ? "Releasing…" : "Verify & Release Funds"}
+                </button>
+              </div>
+            )}
+
+            {locked && (
+              <div className="mt-4 text-sm text-gray-400">
+                🔒 Locked until previous phase completes
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
