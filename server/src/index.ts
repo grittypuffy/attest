@@ -6,6 +6,7 @@ import { MongoClient, type Db } from "mongodb";
 import type AppState from "./config";
 import { SignInRequest, SignUpRequest } from "./models/auth";
 import {
+	AcceptProjectPhaseRequest,
 	CreateProjectPhasesRequest,
 	CreateProjectProposalRequest,
 	CreateProjectRequest,
@@ -307,7 +308,9 @@ const app = new Elysia()
 						params: { project_id, proposal_id },
 						body,
 					});
-				},
+				}, {
+					body: AcceptProjectPhaseRequest
+				}
 			),
 	)
 	.group("/agency", (app) =>
