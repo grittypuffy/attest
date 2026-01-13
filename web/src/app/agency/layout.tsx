@@ -1,9 +1,26 @@
 "use client";
 
-import { SquaresFour, Briefcase, FileText, User } from "@phosphor-icons/react";
+import {
+  alpha,
+  Avatar,
+  Box,
+  Container,
+  Drawer,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Paper,
+  Typography,
+  useTheme,
+} from "@mui/material";
+import { Briefcase, SquaresFour } from "@phosphor-icons/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ReactNode } from "react";
+
+const DRAWER_WIDTH = 280;
 
 const MENU_ITEMS = [
   { text: "Dashboard", icon: <SquaresFour size={24} />, path: "/agency" },
@@ -12,88 +29,195 @@ const MENU_ITEMS = [
     icon: <Briefcase size={24} />,
     path: "/agency/proposals",
   },
-  //{ text: "My Proposals", icon: <FileText size={24} />, path: "/agency/proposals" },
-  //{ text: "Profile", icon: <User size={24} />, path: "/agency/profile" },
 ];
 
 export default function AgencyLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+  const theme = useTheme();
 
   return (
-    <div className="fixed inset-0 z-50 flex bg-gray-50 overflow-hidden mt-18">
+    <Box
+      sx={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 50,
+        display: "flex",
+        bgcolor: "grey.50",
+        overflow: "hidden",
+        mt: "72px",
+        borderTop: 1,
+        borderColor: "grey.200",
+      }}
+    >
       {/* Sidebar */}
-      <aside className="w-64 bg-white border-r border-gray-200 flex flex-col shadow-sm z-20">
-        <div className="h-16 flex items-center px-6 border-b border-gray-200 bg-white">
-          <span className="text-xl font-bold text-blue-600 tracking-tight">
-            Agency Portal
-          </span>
-        </div>
-
-        <nav className="flex-1 overflow-y-auto py-4">
-          <ul className="space-y-1 px-3">
-            {MENU_ITEMS.map((item) => {
-              const isActive = pathname === item.path;
-              return (
-                <li key={item.path}>
-                  <Link
-                    href={item.path}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors duration-200 group ${
-                      isActive
-                        ? "bg-blue-50 text-blue-700"
-                        : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                    }`}
-                  >
-                    <span
-                      className={
-                        isActive
-                          ? "text-blue-600"
-                          : "text-gray-400 group-hover:text-gray-600"
-                      }
+      <Drawer
+        variant="permanent"
+        sx={{
+          width: DRAWER_WIDTH,
+          flexShrink: 0,
+          "& .MuiDrawer-paper": {
+            width: DRAWER_WIDTH,
+            boxSizing: "border-box",
+            position: "relative",
+            border: "none",
+            borderRight: 1,
+            borderColor: "grey.200",
+            boxShadow: theme.shadows[1],
+            bgcolor: "background.paper",
+          },
+        }}
+      >
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            height: "100%",
+          }}
+        >
+          {/* Navigation Menu */}
+          <Box sx={{ flex: 1, overflowY: "auto", py: 2 }}>
+            <List sx={{ px: 1.5 }}>
+              {MENU_ITEMS.map((item) => {
+                const isActive = pathname === item.path;
+                return (
+                  <ListItem key={item.path} disablePadding sx={{ mb: 0.5 }}>
+                    <ListItemButton
+                      component={Link}
+                      href={item.path}
+                      sx={{
+                        borderRadius: 2,
+                        py: 1.5,
+                        px: 2,
+                        transition: "all 0.2s",
+                        bgcolor: isActive
+                          ? alpha(theme.palette.primary.main, 0.08)
+                          : "transparent",
+                        color: isActive
+                          ? "primary.main"
+                          : "text.secondary",
+                        "&:hover": {
+                          bgcolor: isActive
+                            ? alpha(theme.palette.primary.main, 0.12)
+                            : alpha(theme.palette.action.hover, 0.04),
+                          color: isActive ? "primary.main" : "text.primary",
+                        },
+                      }}
                     >
-                      {item.icon}
-                    </span>
-                    <span
-                      className={`font-medium ${isActive ? "font-semibold" : ""}`}
-                    >
-                      {item.text}
-                    </span>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </nav>
+                      <ListItemIcon
+                        sx={{
+                          minWidth: 40,
+                          color: isActive
+                            ? "primary.main"
+                            : "action.active",
+                          transition: "color 0.2s",
+                        }}
+                      >
+                        {item.icon}
+                      </ListItemIcon>
+                      <ListItemText
+                        primary={item.text}
+                        primaryTypographyProps={{
+                          fontWeight: isActive ? 600 : 500,
+                          fontSize: "0.9375rem",
+                        }}
+                      />
+                    </ListItemButton>
+                  </ListItem>
+                );
+              })}
+            </List>
+          </Box>
 
-        <div className="p-4 border-t border-gray-200">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold">
-              BR
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 truncate">
-                BuildRight
-              </p>
-              <p className="text-xs text-gray-500 truncate">Agency Account</p>
-            </div>
-          </div>
-        </div>
-      </aside>
+          {/* User Profile Section */}
+          <Paper
+            elevation={0}
+            sx={{
+              p: 2,
+              borderTop: 1,
+              borderColor: "divider",
+              borderRadius: 0,
+            }}
+          >
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1.5,
+              }}
+            >
+              <Avatar
+                sx={{
+                  width: 44,
+                  height: 44,
+                  bgcolor: alpha(theme.palette.primary.main, 0.15),
+                  color: "primary.main",
+                  fontWeight: 700,
+                  fontSize: "1rem",
+                }}
+              >
+                BR
+              </Avatar>
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    fontWeight: 600,
+                    color: "text.primary",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  BuildRight
+                </Typography>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: "text.secondary",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                    display: "block",
+                  }}
+                >
+                  Agency Account
+                </Typography>
+              </Box>
+            </Box>
+          </Paper>
+        </Box>
+      </Drawer>
 
-      {/* Main Content */}
-      <main className="flex-1 flex flex-col min-w-0 overflow-hidden bg-gray-50/50">
-        {/* Top Header */}
-        <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 sm:px-6 lg:px-8 z-10">
-          <h1 className="text-lg font-semibold text-gray-900">
-            {MENU_ITEMS.find((item) => item.path === pathname)?.text ||
-              "Dashboard"}
-          </h1>
-        </header>
-
-        {/* Page Content Scrollable Area */}
-        <div className="flex-1 overflow-auto p-4 sm:p-6 lg:p-8">
-          <div className="max-w-7xl mx-auto">{children}</div>
-        </div>
-      </main>
-    </div>
+      {/* Main Content Area */}
+      <Box
+        component="main"
+        sx={{
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+          minWidth: 0,
+          overflow: "hidden",
+          bgcolor: alpha(theme.palette.grey[50], 0.5),
+        }}
+      >
+        {/* Scrollable Content */}
+        <Box
+          sx={{
+            flex: 1,
+            overflow: "auto",
+            p: { xs: 2, sm: 3, lg: 4 },
+          }}
+        >
+          <Container
+            maxWidth="xl"
+            sx={{
+              px: { xs: 0, sm: 2 },
+            }}
+          >
+            {children}
+          </Container>
+        </Box>
+      </Box>
+    </Box>
   );
 }
