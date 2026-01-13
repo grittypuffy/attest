@@ -33,8 +33,6 @@ export default function GovernmentLayout({
       href: "/government/proposals",
       icon: CheckCircle,
     },
-    // Phases approval might be better nested under projects or proposals, but keeping it top-level for now as requested
-    { name: "Approve Phases", href: "/government/phases", icon: CheckCircle },
   ];
 
   return (
@@ -52,11 +50,10 @@ export default function GovernmentLayout({
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
-                  isActive
+                className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors ${isActive
                     ? "bg-blue-50 text-blue-700"
                     : "text-gray-700 hover:bg-gray-100"
-                }`}
+                  }`}
               >
                 <Icon className="w-5 h-5 mr-3" />
                 {item.name}
