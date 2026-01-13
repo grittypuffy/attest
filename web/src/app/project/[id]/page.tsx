@@ -156,6 +156,7 @@ const ProjectDetails = ({
   selectedProposal: Proposal | null;
   onSelectProposal: (proposal: Proposal | null) => void;
 }) => {
+  console.log("Rendering ProjectDetails with project:", project);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [selectedTab, setSelectedTab] = useState<number>(0);
   const [user, setUser] = useState<User | null>(null);
@@ -296,9 +297,12 @@ const ProjectDetails = ({
             </>
           )}
 
-          {selectedTab === 1 && isAgencyOrGovernment && (
-            <SubmitProposalForm projectId={project.project_id} />
-          )}
+        {selectedTab === 1 && isAgencyOrGovernment && (
+          <SubmitProposalForm 
+            projectId={project.project_id} 
+            projectOnchainId={project.onchain_id} 
+          />
+        )}
         </CardContent>
       </Card>
 
