@@ -122,7 +122,7 @@ The project uses the following technologies:
 - Next.js for the frontend framework
 - Material UI for the UI framework to ensure consistency and accessibility
 - EditorJS for rich text input processing
-- `viem` and `wagmi` for interaction with smart contract wallet and operations
+- `viem`, `tanstack`  and `wagmi` for interaction with smart contract wallet and operations
 
 ## Backend
 
@@ -135,7 +135,7 @@ The project uses the following technologies:
 
 - Foundry for smart contract development
 - Anvil for local testnet deployment using Docker Compose
-- Inco for smart contract development with confidentiality
+- Inco and Solidity for smart contract development with confidentiality
 - Shardeum for deployment of smart contracts for transfering funds
 
 # Screenshots
