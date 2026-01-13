@@ -67,7 +67,7 @@ export default function ProjectProposalsPage({
 
     if (
       !confirm(
-        "Are you sure you want to approve this proposal? This will trigger an on-chain transaction and reject all other proposals.",
+        "Are you sure you want to approve this proposal? This will trigger a transaction and reject all other proposals.",
       )
     )
       return;
@@ -83,7 +83,7 @@ export default function ProjectProposalsPage({
 
       // 1. On-Chain Approval
       if (typeof proposals.find(p => p.proposal_id === proposalId)?.onchain_id === 'undefined') {
-        throw new Error("Proposal on-chain ID missing");
+        throw new Error("Proposal ID missing");
       }
       
       const proposal = proposals.find(p => p.proposal_id === proposalId)!;
@@ -102,7 +102,7 @@ export default function ProjectProposalsPage({
         kzg: undefined,
       });
 
-      console.log("On-chain approval transaction sent:", hash);
+      console.log("Approval transaction sent:", hash);
 
       // 2. Off-Chain Database Update
       const { data, error } = await api
@@ -112,11 +112,11 @@ export default function ProjectProposalsPage({
         });
 
       if (data && data.success) {
-        alert("Proposal approved on-chain and off-chain successfully!");
+        alert("Proposal approved successfully!");
         fetchProposals(); 
       } else {
         alert(
-          "Blockchain transaction sent, but database update failed: " +
+          "Transaction sent, but database update failed: " +
             (data?.message || error?.value || "Unknown error"),
         );
       }

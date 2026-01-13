@@ -5,6 +5,7 @@ import { api } from "@/lib/api";
 import { ACTIVE_CHAIN_ID, ATTEST_MANAGER_ADDRESS } from "@/lib/constants";
 import { PhaseRegistrationPayload, Project, User } from "@/lib/types";
 import { Proposal } from "@/lib/types/proposal";
+import EditableEditor from "@components/EditableEditor";
 import Editor from "@components/Editor";
 import PhaseRegistrationModal from "@components/PhaseRegistrationModal";
 import {
@@ -22,11 +23,9 @@ import {
   CircularProgress,
   Container,
   Divider,
-  Grid,
-  Stack,
+  Grid, InputAdornment, Stack,
   Tab,
-  Tabs,
-  Typography,
+  Tabs, TextField, Typography
 } from "@mui/material";
 import {
   ArrowLeft,
@@ -36,6 +35,7 @@ import {
   CaretDown,
   CheckCircle,
   CurrencyDollar,
+  CurrencyInrIcon,
   FileText,
   Folder,
   ListBullets,
@@ -326,6 +326,11 @@ const SubmitProposalForm = ({ projectId, projectOnchainId }: { projectId: string
     total_budget: 0,
     summary: "",
   });
+  const [editorData, setEditorData] = useState<any>({
+    time: Date.now(),
+    blocks: [],
+    version: "2.22.2"
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -345,6 +350,10 @@ const SubmitProposalForm = ({ projectId, projectOnchainId }: { projectId: string
     }));
   };
 
+  const handleEditorChange = (data: any) => {
+    setEditorData(data);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -353,6 +362,7 @@ const SubmitProposalForm = ({ projectId, projectOnchainId }: { projectId: string
 
     const payload = {
       ...formData,
+      description: JSON.stringify(editorData),
       total_budget: Number(formData.total_budget),
       no_of_phases: parseInt(String(formData.no_of_phases), 10),
     };
@@ -434,7 +444,7 @@ const SubmitProposalForm = ({ projectId, projectOnchainId }: { projectId: string
       }
 
       if (data?.success) {
-        setSuccess("Proposal submitted successfully on-chain and off-chain!");
+        setSuccess("Proposal submitted successfully!");
         setFormData({
           proposal_name: "",
           description: "",
@@ -443,6 +453,11 @@ const SubmitProposalForm = ({ projectId, projectOnchainId }: { projectId: string
           timeline: "",
           total_budget: 0,
           summary: "",
+        });
+        setEditorData({
+          time: Date.now(),
+          blocks: [],
+          version: "2.22.2"
         });
       } else {
         setError(data?.message || "An unexpected error occurred.");
@@ -455,166 +470,158 @@ const SubmitProposalForm = ({ projectId, projectOnchainId }: { projectId: string
   };
 
   return (
-    <div className="max-w-3xl mx-auto">
-      <Typography variant="h5" className="font-bold mb-6 text-gray-900">
+    <Box>
+      <Typography variant="h5" fontWeight={700} sx={{ mb: 4 }}>
         Submit a New Proposal
       </Typography>
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div>
-          <label
-            htmlFor="proposal_name"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Proposal Name
-          </label>
-          <input
-            type="text"
-            name="proposal_name"
-            id="proposal_name"
-            required
-            value={formData.proposal_name}
-            onChange={handleChange}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-          />
-        </div>
 
-        <div>
-          <label
-            htmlFor="description"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Description
-          </label>
-          <textarea
-            name="description"
-            id="description"
-            required
-            rows={4}
-            value={formData.description}
-            onChange={handleChange}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-          />
-        </div>
+      <form onSubmit={handleSubmit}>
+        <Grid container spacing={3}>
+          {/* Left Pane - Input Fields */}
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Stack spacing={3}>
+              <TextField
+                label="Proposal Name"
+                name="proposal_name"
+                required
+                fullWidth
+                value={formData.proposal_name}
+                onChange={handleChange}
+                variant="outlined"
+              />
 
-        <div>
-          <label
-            htmlFor="summary"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Summary (Optional)
-          </label>
-          <textarea
-            name="summary"
-            id="summary"
-            rows={3}
-            value={formData.summary}
-            onChange={handleChange}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-          />
-        </div>
+              <TextField
+                label="Summary"
+                name="summary"
+                multiline
+                rows={3}
+                fullWidth
+                value={formData.summary}
+                onChange={handleChange}
+                variant="outlined"
+                helperText="Brief overview of the proposal"
+              />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label
-              htmlFor="total_budget"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Total Budget
-            </label>
-            <input
-              type="number"
-              name="total_budget"
-              id="total_budget"
-              required
-              min="0"
-              value={formData.total_budget}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-            />
-          </div>
+              <Grid container spacing={2}>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <TextField
+                    label="Total Budget"
+                    name="total_budget"
+                    type="number"
+                    required
+                    fullWidth
+                    value={formData.total_budget}
+                    onChange={handleChange}
+                    variant="outlined"
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <CurrencyDollar size={20} weight="duotone" />
+                        </InputAdornment>
+                      ),
+                    }}
+                    inputProps={{ min: 0 }}
+                  />
+                </Grid>
 
-          <div>
-            <label
-              htmlFor="timeline"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Timeline
-            </label>
-            <input
-              type="text"
-              name="timeline"
-              id="timeline"
-              required
-              placeholder="e.g., 6 months"
-              value={formData.timeline}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-            />
-          </div>
-        </div>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <TextField
+                    label="Timeline"
+                    name="timeline"
+                    required
+                    fullWidth
+                    placeholder="e.g., 6 months"
+                    value={formData.timeline}
+                    onChange={handleChange}
+                    variant="outlined"
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <CalendarBlank size={20} weight="duotone" />
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                </Grid>
+              </Grid>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label
-              htmlFor="no_of_phases"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Number of Phases
-            </label>
-            <input
-              type="number"
-              name="no_of_phases"
-              id="no_of_phases"
-              required
-              min="1"
-              value={formData.no_of_phases}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-            />
-          </div>
+              <Grid container spacing={2}>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <TextField
+                    label="Number of Phases"
+                    name="no_of_phases"
+                    type="number"
+                    required
+                    fullWidth
+                    value={formData.no_of_phases}
+                    onChange={handleChange}
+                    variant="outlined"
+                    inputProps={{ min: 1 }}
+                  />
+                </Grid>
 
-          <div>
-            <label
-              htmlFor="outcome"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Expected Outcome
-            </label>
-            <input
-              type="text"
-              name="outcome"
-              id="outcome"
-              required
-              value={formData.outcome}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-            />
-          </div>
-        </div>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <TextField
+                    label="Expected Outcome"
+                    name="outcome"
+                    required
+                    fullWidth
+                    value={formData.outcome}
+                    onChange={handleChange}
+                    variant="outlined"
+                  />
+                </Grid>
+              </Grid>
+            </Stack>
+          </Grid>
 
+          {/* Right Pane - Editor */}
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Box>
+              <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1.5 }}>
+                Proposal Description *
+              </Typography>
+              <Card variant="outlined" sx={{ minHeight: 400, p: 2 }}>
+                <EditableEditor
+                  data={editorData}
+                  onChange={handleEditorChange}
+                  holder="proposal-editor"
+                />
+              </Card>
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: "block" }}>
+                Use the editor to create a detailed proposal description
+              </Typography>
+            </Box>
+          </Grid>
+        </Grid>
+
+        {/* Error and Success Messages */}
         {error && (
-          <div className="p-3 bg-red-50 text-red-700 text-sm rounded-lg">
+          <Alert severity="error" sx={{ mt: 3 }} icon={<WarningCircle size={24} weight="duotone" />}>
             {error}
-          </div>
+          </Alert>
         )}
         {success && (
-          <div className="p-3 bg-green-50 text-green-700 text-sm rounded-lg">
+          <Alert severity="success" sx={{ mt: 3 }} icon={<CheckCircle size={24} weight="fill" />}>
             {success}
-          </div>
+          </Alert>
         )}
 
-        <div className="flex justify-end pt-4">
+        {/* Submit Button */}
+        <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 4 }}>
           <Button
             type="submit"
             variant="contained"
             size="large"
             disabled={loading}
+            startIcon={loading ? <CircularProgress size={20} /> : <PencilLine size={20} />}
+            sx={{ textTransform: "none", px: 4 }}
           >
             {loading ? "Submitting..." : "Submit Proposal"}
           </Button>
-        </div>
+        </Box>
       </form>
-    </div>
+    </Box>
   );
 };
 
@@ -902,8 +909,8 @@ const ProposalDetailsView = ({
                     </Typography>
                     <Typography variant="body1" color="text.secondary">
                       <Stack direction="row" spacing={0.5} alignItems="center">
-                        <CurrencyDollar size={18} weight="duotone" />
-                        <span>₹{proposal.total_budget?.toLocaleString() || "N/A"}</span>
+                        <CurrencyInrIcon size={18} weight="duotone" />
+                        <span>{proposal.total_budget?.toLocaleString() || "N/A"}</span>
                       </Stack>
                     </Typography>
                   </div>
