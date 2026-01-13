@@ -31,6 +31,10 @@ import {
   PencilLine,
 } from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
+import { useAccount, useSwitchChain, useWalletClient, usePublicClient } from "wagmi";
+import { encodeFunctionData, parseEther, hexToNumber } from "viem";
+import { ACTIVE_CHAIN_ID, ATTEST_MANAGER_ADDRESS } from "@/lib/constants";
+import AttestManagerABI from "@/abi/AttestManager.json";
 
 export default function ProjectPage({
   params,
@@ -270,7 +274,7 @@ const ProjectDetails = ({
         )}
 
         {selectedTab === 1 && isAgencyOrGovernment && (
-          <SubmitProposalForm projectId={project.project_id} />
+          <SubmitProposalForm projectId={project.project_id} projectOnchainId={project.onchain_id} />
         )}
       </div>
 
@@ -288,7 +292,7 @@ const ProjectDetails = ({
   );
 };
 
-const SubmitProposalForm = ({ projectId }: { projectId: string }) => {
+const SubmitProposalForm = ({ projectId, projectOnchainId }: { projectId: string, projectOnchainId?: number }) => {
   const [formData, setFormData] = useState({
     proposal_name: "",
     description: "",
@@ -301,6 +305,11 @@ const SubmitProposalForm = ({ projectId }: { projectId: string }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
+  const { chainId, address: userAddress } = useAccount();
+  const { switchChain } = useSwitchChain();
+  const { data: walletClient } = useWalletClient();
+  const publicClient = usePublicClient();
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -336,9 +345,59 @@ const SubmitProposalForm = ({ projectId }: { projectId: string }) => {
     }
 
     try {
+      if (!walletClient) throw new Error("Wallet not connected");
+      if (typeof projectOnchainId === 'undefined') throw new Error("Project on-chain ID missing");
+
+      // 0. Network Sync
+      if (chainId !== ACTIVE_CHAIN_ID) {
+        switchChain({ chainId: ACTIVE_CHAIN_ID });
+        setLoading(false);
+        return;
+      }
+
+      // 1. On-Chain Transaction: submitProposal(uint256 projectId, string metadataURI, PhaseInput[] phases)
+      // For now, we'll create simple phases based on no_of_phases
+      const phaseBudget = parseEther((payload.total_budget / payload.no_of_phases).toString());
+      const phases = Array.from({ length: payload.no_of_phases }, (_, i) => ({
+        description: `Phase ${i + 1}`,
+        allocatedAmount: phaseBudget,
+      }));
+
+      const encodedData = encodeFunctionData({
+        abi: AttestManagerABI,
+        functionName: "submitProposal",
+        args: [BigInt(projectOnchainId), payload.proposal_name, phases],
+      });
+
+      const hash = await walletClient.sendTransaction({
+        account: userAddress,
+        to: ATTEST_MANAGER_ADDRESS as `0x${string}`,
+        data: encodedData,
+        chain: walletClient.chain,
+        kzg: undefined,
+      });
+
+      console.log("On-chain proposal submission sent:", hash);
+
+      if (!publicClient) throw new Error("Public client missing");
+      const receipt = await publicClient.waitForTransactionReceipt({ hash });
+      
+      let onchainProposalId: number | undefined;
+      if (receipt.logs.length > 0) {
+        // More robust: find the log that has 3 topics (ProposalSubmitted signature + 2 indexed params)
+        const proposalLog = receipt.logs.find(l => l.topics.length >= 2);
+        if (proposalLog && proposalLog.topics[1]) {
+          onchainProposalId = hexToNumber(proposalLog.topics[1]);
+        }
+      }
+
+      // 2. Database record
       const { data, error: apiError } = await api
         .project({ project_id: projectId })
-        .proposal.register.post(payload);
+        .proposal.register.post({
+          ...payload,
+          onchain_id: onchainProposalId
+        });
 
       if (apiError) {
         const errorDetails = apiError.value as any;
@@ -351,7 +410,7 @@ const SubmitProposalForm = ({ projectId }: { projectId: string }) => {
       }
 
       if (data?.success) {
-        setSuccess("Proposal submitted successfully!");
+        setSuccess("Proposal submitted successfully on-chain and off-chain!");
         setFormData({
           proposal_name: "",
           description: "",

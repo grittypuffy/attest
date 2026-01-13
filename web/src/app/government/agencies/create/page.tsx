@@ -4,7 +4,7 @@ import { api } from "@/lib/api";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useAccount, useSwitchChain, usePublicClient, useWalletClient } from "wagmi";
-import { encodeFunctionData, parseGwei, getAddress } from "viem";
+import { encodeFunctionData, parseGwei, getAddress, hexToNumber } from "viem";
 import { ACTIVE_CHAIN_ID, ATTEST_MANAGER_ADDRESS } from "@/lib/constants";
 import AttestManagerABI from "@/abi/AttestManager.json";
 
