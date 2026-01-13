@@ -1,17 +1,42 @@
 "use client";
+
+import { api } from "@/lib/api";
+import type { User } from "@/lib/types";
+import {
+  alpha,
+  AppBar,
+  Avatar,
+  Box,
+  Button,
+  Container,
+  Divider,
+  Menu,
+  MenuItem,
+  Stack,
+  Toolbar,
+  Typography,
+  useTheme,
+} from "@mui/material";
+import { CaretDown, SignOut } from "@phosphor-icons/react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState, useRef } from "react";
-import { api } from "@/lib/api";
+import { useEffect, useState } from "react";
 import ConnectWallet from "./ConnectWallet";
+
+const NAV_ITEMS = [
+  { name: "Home", href: "/" },
+  { name: "Projects", href: "/projects" },
+  { name: "Agencies", href: "/agencies" },
+];
 
 export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
+  const theme = useTheme();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<User | null>(null);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const isMenuOpen = Boolean(anchorEl);
 
   useEffect(() => {
     bootstrapAuth();
@@ -39,40 +64,25 @@ export default function Navbar() {
     }
   };
 
-  // Close menu when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setIsMenuOpen(false);
-      }
-    };
+  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
 
-    if (isMenuOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [isMenuOpen]);
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
 
   const handleLogout = async () => {
     try {
       await api.auth.sign_out.post();
       setIsAuthenticated(false);
       setUser(null);
-      setIsMenuOpen(false);
+      handleMenuClose();
       router.push("/");
     } catch (error) {
       console.error("Logout failed", error);
     }
   };
-
-  const navItems = [
-    { name: "Home", href: "/" },
-    { name: "Projects", href: "/projects" },
-    { name: "Agencies", href: "/agencies" },
-  ];
 
   const getUserMenuItems = () => {
     if (!user) return [];
@@ -88,10 +98,6 @@ export default function Navbar() {
         name: "My Proposals",
         href: `${baseRoute}/proposals`,
       },
-      //{
-      //  name: "Profile",
-      //  href: `${baseRoute}/profile`,
-      //},
     ];
   };
 
@@ -105,98 +111,269 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="bg-white shadow-sm mb-8">
-      <div className="app-container py-4 flex justify-between items-center">
-        <Link href="/" className="text-xl font-bold text-gray-900">
-          Attest
-        </Link>
-        <div className="flex items-center space-x-8">
-          <div className="flex space-x-6">
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`text-sm font-medium transition-colors hover:text-blue-600 ${
-                  pathname === item.href ? "text-blue-600" : "text-gray-500"
-                }`}
-              >
-                {item.name}
-              </Link>
-            ))}
-          </div>
-          <div className="flex items-center gap-4">
-            <ConnectWallet />
-            {isAuthenticated && user ? (
-              <div className="relative" ref={menuRef}>
-              <button
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="flex items-center space-x-2 focus:outline-none"
-              >
-                <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-medium text-sm">
-                  {getInitials(user.name)}
-                </div>
-                <svg
-                  className={`w-4 h-4 text-gray-500 transition-transform ${
-                    isMenuOpen ? "rotate-180" : ""
-                  }`}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+    <AppBar
+      position="sticky"
+      elevation={0}
+      sx={{
+        bgcolor: "background.paper",
+        borderBottom: 1,
+        borderColor: "divider",
+        mb: 4,
+      }}
+    >
+      <Container maxWidth="xl">
+        <Toolbar disableGutters sx={{ minHeight: 72 }}>
+          {/* Logo */}
+          <Typography
+            variant="h5"
+            component={Link}
+            href="/"
+            sx={{
+              fontWeight: 700,
+              color: "text.primary",
+              textDecoration: "none",
+              letterSpacing: "-0.02em",
+              "&:hover": {
+                color: "primary.main",
+              },
+              transition: "color 0.2s",
+            }}
+          >
+            Attest
+          </Typography>
+
+          {/* Spacer */}
+          <Box sx={{ flexGrow: 1 }} />
+
+          {/* Navigation Links */}
+          <Stack
+            direction="row"
+            spacing={1}
+            sx={{ mr: 4, display: { xs: "none", md: "flex" } }}
+          >
+            {NAV_ITEMS.map((item) => {
+              const isActive = pathname === item.href;
+              return (
+                <Button
+                  key={item.href}
+                  component={Link}
+                  href={item.href}
+                  sx={{
+                    px: 2,
+                    py: 1,
+                    color: isActive ? "primary.main" : "text.secondary",
+                    fontWeight: isActive ? 600 : 500,
+                    fontSize: "0.9375rem",
+                    textTransform: "none",
+                    position: "relative",
+                    "&:hover": {
+                      color: "primary.main",
+                      bgcolor: alpha(theme.palette.primary.main, 0.04),
+                    },
+                    "&::after": isActive
+                      ? {
+                        content: '""',
+                        position: "absolute",
+                        bottom: 0,
+                        left: "50%",
+                        transform: "translateX(-50%)",
+                        width: "70%",
+                        height: 2,
+                        bgcolor: "primary.main",
+                        borderRadius: 1,
+                      }
+                      : {},
+                    transition: "all 0.2s",
+                  }}
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M19 9l-7 7-7-7"
+                  {item.name}
+                </Button>
+              );
+            })}
+          </Stack>
+
+          {/* Connect Wallet & User Menu */}
+          <Stack direction="row" spacing={2} alignItems="center">
+            <ConnectWallet />
+
+            {isAuthenticated && user ? (
+              <>
+                <Box
+                  onClick={handleMenuOpen}
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                    cursor: "pointer",
+                    px: 1.5,
+                    py: 0.75,
+                    borderRadius: 2,
+                    transition: "all 0.2s",
+                    "&:hover": {
+                      bgcolor: alpha(theme.palette.action.hover, 0.04),
+                    },
+                  }}
+                >
+                  <Avatar
+                    sx={{
+                      width: 40,
+                      height: 40,
+                      bgcolor: "primary.main",
+                      fontSize: "0.875rem",
+                      fontWeight: 600,
+                    }}
+                  >
+                    {getInitials(user.name || user.email)}
+                  </Avatar>
+                  <CaretDown
+                    size={16}
+                    weight="bold"
+                    style={{
+                      color: theme.palette.text.secondary,
+                      transform: isMenuOpen ? "rotate(180deg)" : "rotate(0deg)",
+                      transition: "transform 0.2s",
+                    }}
                   />
-                </svg>
-              </button>
+                </Box>
 
-              {isMenuOpen && (
-                <div className="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg border border-gray-200 py-1 z-100">
-                  <div className="px-4 py-3 border-b border-gray-200">
-                    <p className="text-sm font-medium text-gray-900">
-                      {user.name}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">{user.email}</p>
-                    <p className="text-xs text-blue-600 mt-1 capitalize">
-                      {user.role}
-                    </p>
-                  </div>
+                <Menu
+                  anchorEl={anchorEl}
+                  open={isMenuOpen}
+                  onClose={handleMenuClose}
+                  anchorOrigin={{
+                    vertical: "bottom",
+                    horizontal: "right",
+                  }}
+                  transformOrigin={{
+                    vertical: "top",
+                    horizontal: "right",
+                  }}
+                  sx={{
+                    mt: 1,
+                    "& .MuiPaper-root": {
+                      minWidth: 240,
+                      borderRadius: 2,
+                      boxShadow: theme.shadows[3],
+                      border: 1,
+                      borderColor: "divider",
+                    },
+                  }}
+                >
+                  {/* User Info Header */}
+                  <Box sx={{ px: 2, py: 1.5, pb: 1 }}>
+                    <Typography
+                      variant="body2"
+                      fontWeight={600}
+                      color="text.primary"
+                      sx={{
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {user.name || "User"}
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{
+                        display: "block",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {user.email}
+                    </Typography>
+                    <Box
+                      sx={{
+                        display: "inline-block",
+                        mt: 0.5,
+                        px: 1,
+                        py: 0.25,
+                        bgcolor: alpha(theme.palette.primary.main, 0.1),
+                        borderRadius: 1,
+                      }}
+                    >
+                      <Typography
+                        variant="caption"
+                        fontWeight={600}
+                        color="primary.main"
+                        sx={{ textTransform: "capitalize" }}
+                      >
+                        {user.role}
+                      </Typography>
+                    </Box>
+                  </Box>
 
+                  <Divider sx={{ my: 1 }} />
+
+                  {/* Menu Items */}
                   {getUserMenuItems().map((item) => (
-                    <Link
+                    <MenuItem
                       key={item.href}
+                      component={Link}
                       href={item.href}
-                      onClick={() => setIsMenuOpen(false)}
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                      onClick={handleMenuClose}
+                      sx={{
+                        py: 1.25,
+                        px: 2,
+                        fontSize: "0.9375rem",
+                        "&:hover": {
+                          bgcolor: alpha(theme.palette.primary.main, 0.04),
+                        },
+                      }}
                     >
                       {item.name}
-                    </Link>
+                    </MenuItem>
                   ))}
 
-                  <div className="border-t border-gray-200 mt-1 pt-1">
-                    <button
-                        onClick={handleLogout}
-                        className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                      >
-                        Logout
-                      </button>
-                    </div>
-                </div>
-              )}
-            </div>
-          ) : (
-              <Link
+                  <Divider sx={{ my: 1 }} />
+
+                  {/* Logout Button */}
+                  <MenuItem
+                    onClick={handleLogout}
+                    sx={{
+                      py: 1.25,
+                      px: 2,
+                      color: "error.main",
+                      fontSize: "0.9375rem",
+                      "&:hover": {
+                        bgcolor: alpha(theme.palette.error.main, 0.04),
+                      },
+                    }}
+                  >
+                    <Stack direction="row" spacing={1} alignItems="center">
+                      <SignOut size={18} />
+                      <span>Logout</span>
+                    </Stack>
+                  </MenuItem>
+                </Menu>
+              </>
+            ) : (
+              <Button
+                component={Link}
                 href="/auth"
-                className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors shadow-sm"
+                variant="contained"
+                sx={{
+                  px: 3,
+                  py: 1,
+                  textTransform: "none",
+                  fontWeight: 600,
+                  fontSize: "0.9375rem",
+                  borderRadius: 2,
+                  boxShadow: theme.shadows[2],
+                  "&:hover": {
+                    boxShadow: theme.shadows[4],
+                  },
+                }}
               >
                 Sign In
-              </Link>
+              </Button>
             )}
-          </div>
-        </div>
-      </div>
-    </nav>
+          </Stack>
+        </Toolbar>
+      </Container>
+    </AppBar>
   );
 }
