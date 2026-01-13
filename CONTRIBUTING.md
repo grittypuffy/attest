@@ -3,8 +3,18 @@
 Ensure you have the following dependencies installed on your system:
 1. Bun: Runtime for running server and web application
 2. Docker Compose: For running the Inco network locally using Anvil
+3. Git: For version control management
 
-# Frontend
+Clone the Git repo from GitHub to get started with the project:
+
+```sh
+git clone https://github.com/grittypuffy/attest
+cd attest
+```
+
+## Project Components
+
+The project components which will need set up for running the application are documented below
 
 # Smart contract
 
