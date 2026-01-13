@@ -1,0 +1,19 @@
+services:
+  # Anvil node
+  anvil:
+    platform: linux/amd64 # mac compatibility
+    image: inconetwork/local-node-anvil-testnet:${DOCKER_IMAGE_TAG:-latest}
+    ports:
+      - "8545:8545"
+    # Removed explicit healthcheck as curl might be missing.
+    # The container logs showed it starts fine.
+
+  # Covalidator service
+  covalidator:
+    platform: linux/amd64 # mac compatibility
+    image: inconetwork/local-node-covalidator-testnet:${DOCKER_IMAGE_TAG:-latest}
+    depends_on:
+      anvil:
+        condition: service_started # Changed from service_healthy to ensure it starts
+    ports:
+      - "50055:50055"
