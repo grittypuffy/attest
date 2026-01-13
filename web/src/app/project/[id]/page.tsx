@@ -1,6 +1,8 @@
 "use client";
 
+import AttestManagerABI from "@/abi/AttestManager.json";
 import { api } from "@/lib/api";
+import { ACTIVE_CHAIN_ID, ATTEST_MANAGER_ADDRESS } from "@/lib/constants";
 import { PhaseRegistrationPayload, Project, User } from "@/lib/types";
 import { Proposal } from "@/lib/types/proposal";
 import Editor from "@components/Editor";
@@ -9,12 +11,19 @@ import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
+  Alert,
+  AlertTitle,
   Box,
   Button,
   Card,
   CardActionArea,
   CardContent,
   Chip,
+  CircularProgress,
+  Container,
+  Divider,
+  Grid,
+  Stack,
   Tab,
   Tabs,
   Typography,
@@ -23,18 +32,20 @@ import {
   ArrowLeft,
   Buildings,
   Calendar,
+  CalendarBlank,
   CaretDown,
   CheckCircle,
-  CurrencyInrIcon,
+  CurrencyDollar,
   FileText,
+  Folder,
   ListBullets,
   PencilLine,
+  Warning,
+  WarningCircle
 } from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
-import { useAccount, useSwitchChain, useWalletClient, usePublicClient } from "wagmi";
-import { encodeFunctionData, parseEther, hexToNumber } from "viem";
-import { ACTIVE_CHAIN_ID, ATTEST_MANAGER_ADDRESS } from "@/lib/constants";
-import AttestManagerABI from "@/abi/AttestManager.json";
+import { encodeFunctionData, hexToNumber, parseEther } from "viem";
+import { useAccount, usePublicClient, useSwitchChain, useWalletClient } from "wagmi";
 
 export default function ProjectPage({
   params,
@@ -94,29 +105,33 @@ export default function ProjectPage({
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center py-20">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
+      <Container maxWidth="lg" sx={{ py: 10 }}>
+        <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
+          <CircularProgress size={60} />
+        </Box>
+      </Container>
     );
   }
 
   if (error) {
     return (
-      <div className="max-w-7xl mx-auto p-6">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-red-800">Error: {error}</p>
-        </div>
-      </div>
+      <Container maxWidth="lg" sx={{ py: 6 }}>
+        <Alert severity="error" icon={<WarningCircle size={24} weight="duotone" />}>
+          <AlertTitle>Error</AlertTitle>
+          {error}
+        </Alert>
+      </Container>
     );
   }
 
   if (!project) {
     return (
-      <div className="max-w-7xl mx-auto p-6">
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-          <p className="text-yellow-800">Project not found</p>
-        </div>
-      </div>
+      <Container maxWidth="lg" sx={{ py: 6 }}>
+        <Alert severity="warning" icon={<Warning size={24} weight="duotone" />}>
+          <AlertTitle>Not Found</AlertTitle>
+          Project not found
+        </Alert>
+      </Container>
     );
   }
 
@@ -215,14 +230,21 @@ const ProjectDetails = ({
     userRole === "Agency" || userRole === "Government";
 
   return (
-    <div className="min-w-6xl p-4 md:p-6 w-full">
+    <Container maxWidth="xl" sx={{ py: 4 }}>
       {/* Project Header */}
-      <div className="mb-6 bg-white rounded-lg shadow-sm p-6">
-        <h1 className="text-3xl font-bold mb-4 text-gray-900">
-          {project.project_name}
-        </h1>
-        <p className="text-gray-700 text-lg">{project.description}</p>
-      </div>
+      <Card elevation={1} sx={{ mb: 4, borderRadius: 2 }}>
+        <CardContent sx={{ p: 4 }}>
+          <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 2 }}>
+            <Folder size={32} weight="duotone" />
+            <Typography variant="h4" fontWeight={700}>
+              {project.project_name}
+            </Typography>
+          </Stack>
+          <Typography variant="body1" color="text.secondary" sx={{ fontSize: "1.1rem" }}>
+            {project.description}
+          </Typography>
+        </CardContent>
+      </Card>
 
       {/* Tabs Navigation */}
       <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
@@ -254,29 +276,31 @@ const ProjectDetails = ({
       </Box>
 
       {/* Main Content Area */}
-      <div className="bg-white rounded-lg shadow-md p-6">
-        {selectedTab === 0 && (
-          <>
-            {selectedProposal ? (
-              <ProposalDetailsView
-                proposal={selectedProposal}
-                onBack={() => onSelectProposal(null)}
-                userRole={userRole}
-                onRegisterPhases={openPhaseModal}
-              />
-            ) : (
-              <ProposalsGridView
-                proposals={proposals}
-                onSelectProposal={onSelectProposal}
-              />
-            )}
-          </>
-        )}
+      <Card elevation={1} sx={{ borderRadius: 2 }}>
+        <CardContent sx={{ p: 4 }}>
+          {selectedTab === 0 && (
+            <>
+              {selectedProposal ? (
+                <ProposalDetailsView
+                  proposal={selectedProposal}
+                  onBack={() => onSelectProposal(null)}
+                  userRole={userRole}
+                  onRegisterPhases={openPhaseModal}
+                />
+              ) : (
+                <ProposalsGridView
+                  proposals={proposals}
+                  onSelectProposal={onSelectProposal}
+                />
+              )}
+            </>
+          )}
 
-        {selectedTab === 1 && isAgencyOrGovernment && (
-          <SubmitProposalForm projectId={project.project_id} projectOnchainId={project.onchain_id} />
-        )}
-      </div>
+          {selectedTab === 1 && isAgencyOrGovernment && (
+            <SubmitProposalForm projectId={project.project_id} />
+          )}
+        </CardContent>
+      </Card>
 
       {/* Phase Registration Modal */}
       {selectedProposalForPhases && (
@@ -288,7 +312,7 @@ const ProjectDetails = ({
           projectName={project.project_name}
         />
       )}
-    </div>
+    </Container>
   );
 };
 
@@ -381,7 +405,7 @@ const SubmitProposalForm = ({ projectId, projectOnchainId }: { projectId: string
 
       if (!publicClient) throw new Error("Public client missing");
       const receipt = await publicClient.waitForTransactionReceipt({ hash });
-      
+
       let onchainProposalId: number | undefined;
       if (receipt.logs.length > 0) {
         // More robust: find the log that has 3 topics (ProposalSubmitted signature + 2 indexed params)
@@ -403,9 +427,9 @@ const SubmitProposalForm = ({ projectId, projectOnchainId }: { projectId: string
         const errorDetails = apiError.value as any;
         throw new Error(
           errorDetails?.message ||
-            (typeof errorDetails === "string"
-              ? errorDetails
-              : "Failed to submit proposal"),
+          (typeof errorDetails === "string"
+            ? errorDetails
+            : "Failed to submit proposal"),
         );
       }
 
@@ -603,30 +627,31 @@ const ProposalsGridView = ({
 }) => {
   if (proposals.length === 0) {
     return (
-      <div className="text-center py-12">
-        <FileText size={64} className="mx-auto text-gray-300 mb-4" />
-        <p className="text-gray-500 text-lg">
+      <Box sx={{ textAlign: "center", py: 8 }}>
+        <FileText size={64} weight="duotone" color="#9CA3AF" style={{ margin: "0 auto 16px" }} />
+        <Typography variant="h6" color="text.secondary">
           No proposals available for this project yet.
-        </p>
-      </div>
+        </Typography>
+      </Box>
     );
   }
 
   return (
-    <div>
-      <h2 className="text-2xl font-bold mb-6 text-gray-900">
+    <Box>
+      <Typography variant="h5" fontWeight={700} sx={{ mb: 4 }}>
         Project Proposals ({proposals.length})
-      </h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+      </Typography>
+      <Grid container spacing={3}>
         {proposals.map((proposal) => (
-          <ProposalCard
-            key={proposal.proposal_id}
-            proposal={proposal}
-            onClick={() => onSelectProposal(proposal)}
-          />
+          <Grid size={{ xs: 12, md: 6, lg: 4 }} key={proposal.proposal_id}>
+            <ProposalCard
+              proposal={proposal}
+              onClick={() => onSelectProposal(proposal)}
+            />
+          </Grid>
         ))}
-      </div>
-    </div>
+      </Grid>
+    </Box>
   );
 };
 
@@ -639,30 +664,32 @@ const ProposalCard = ({
 }) => {
   return (
     <Card
+      elevation={2}
       sx={{
         height: "100%",
         transition: "all 0.2s",
+        borderRadius: 2,
         "&:hover": {
           transform: "translateY(-4px)",
-          boxShadow: 3,
+          boxShadow: 4,
         },
       }}
     >
       <CardActionArea onClick={onClick} sx={{ height: "100%", p: 0 }}>
         <CardContent
-          sx={{ height: "100%", display: "flex", flexDirection: "column" }}
+          sx={{ height: "100%", display: "flex", flexDirection: "column", p: 3 }}
         >
-          <div className="flex items-start justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <Buildings size={24} className="text-blue-600" />
+          <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 2 }}>
+            <Stack direction="row" spacing={1} alignItems="center">
+              <Buildings size={24} weight="duotone" color="#2563EB" />
               <Chip
                 label="Active"
                 size="small"
                 color="success"
-                icon={<CheckCircle size={16} />}
+                icon={<CheckCircle size={16} weight="fill" />}
               />
-            </div>
-          </div>
+            </Stack>
+          </Stack>
 
           <Typography
             variant="h6"
@@ -725,32 +752,38 @@ const ProposalDetailsView = ({
   };
 
   return (
-    <div>
+    <Box>
       {/* Back Button */}
-      <button
+      <Button
+        startIcon={<ArrowLeft size={20} />}
         onClick={onBack}
-        className="flex items-center gap-2 text-blue-600 hover:text-blue-700 mb-6 transition-colors"
+        sx={{ mb: 3, textTransform: "none", fontWeight: 600 }}
       >
-        <ArrowLeft size={20} />
-        <span className="font-medium">Back to Proposals</span>
-      </button>
+        Back to Proposals
+      </Button>
 
       {/* Proposal Header */}
-      <div className="mb-6 pb-6 border-b border-gray-200">
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex-1">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+      <Box sx={{ mb: 4 }}>
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          justifyContent="space-between"
+          alignItems={{ xs: "flex-start", sm: "center" }}
+          spacing={2}
+          sx={{ mb: 3 }}
+        >
+          <Box>
+            <Typography variant="h5" fontWeight={700} gutterBottom>
               Proposal Details
-            </h2>
-            <Typography variant="body1" color="text.secondary">
-              Proposal ID: {proposal.proposal_id}
             </Typography>
-          </div>
-          <div className="flex items-center gap-3">
+            <Typography variant="body2" color="text.secondary">
+              ID: {proposal.proposal_id}
+            </Typography>
+          </Box>
+          <Stack direction="row" spacing={2} alignItems="center">
             <Chip
               label="Active"
               color="success"
-              icon={<CheckCircle size={16} />}
+              icon={<CheckCircle size={16} weight="fill" />}
             />
             {userRole === "Government" && (
               <Button
@@ -760,28 +793,33 @@ const ProposalDetailsView = ({
                   onRegisterPhases(proposal.proposal_id, proposal.proposal_name)
                 }
                 sx={{ textTransform: "none" }}
+                startIcon={<CalendarBlank size={18} />}
               >
                 Register Phases
               </Button>
             )}
-          </div>
-        </div>
+          </Stack>
+        </Stack>
 
-        <div className="bg-blue-50 rounded-lg p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <Buildings size={24} className="text-blue-700" />
-            <Typography variant="h6" className="text-blue-900">
-              Agency Information
+        <Card sx={{ bgcolor: "primary.50", border: 1, borderColor: "primary.200" }}>
+          <CardContent>
+            <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1.5 }}>
+              <Buildings size={24} weight="duotone" />
+              <Typography variant="h6" color="primary.dark">
+                Agency Information
+              </Typography>
+            </Stack>
+            <Typography variant="body1" color="primary.dark">
+              Agency ID: {proposal.agency_id}
             </Typography>
-          </div>
-          <Typography variant="body1" className="text-blue-800">
-            Agency ID: {proposal.agency_id}
-          </Typography>
-          <Typography variant="body2" className="text-blue-700 mt-1">
-            Project ID: {proposal.project_id}
-          </Typography>
-        </div>
-      </div>
+            <Typography variant="body2" color="primary.dark" sx={{ mt: 0.5 }}>
+              Project ID: {proposal.project_id}
+            </Typography>
+          </CardContent>
+        </Card>
+      </Box>
+
+      <Divider sx={{ mb: 4 }} />
 
       {/* Vertical Tabs */}
       <Box sx={{ display: "flex", gap: 3 }}>
@@ -863,10 +901,10 @@ const ProposalDetailsView = ({
                       Total Budget
                     </Typography>
                     <Typography variant="body1" color="text.secondary">
-                      <span className="inline-flex gap-1">
-                        <CurrencyInrIcon />{" "}
-                        {proposal.total_budget?.toLocaleString() || "N/A"}
-                      </span>
+                      <Stack direction="row" spacing={0.5} alignItems="center">
+                        <CurrencyDollar size={18} weight="duotone" />
+                        <span>₹{proposal.total_budget?.toLocaleString() || "N/A"}</span>
+                      </Stack>
                     </Typography>
                   </div>
 
@@ -1007,10 +1045,10 @@ const ProposalDetailsView = ({
                                   variant="body2"
                                   color="text.secondary"
                                 >
-                                  <span className="inline-flex items-center gap-1">
-                                    <CurrencyInrIcon size={16} />
-                                    {phase.budget?.toLocaleString() || "N/A"}
-                                  </span>
+                                  <Stack direction="row" spacing={0.5} alignItems="center">
+                                    <CurrencyDollar size={16} weight="duotone" />
+                                    <span>₹{phase.budget?.toLocaleString() || "N/A"}</span>
+                                  </Stack>
                                 </Typography>
                               </div>
 
@@ -1094,6 +1132,6 @@ const ProposalDetailsView = ({
           )}
         </Box>
       </Box>
-    </div>
+    </Box>
   );
 };
