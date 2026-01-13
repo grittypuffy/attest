@@ -472,7 +472,7 @@ export const acceptProjectPhaseHandler = async ({
 	}
 };
 
-/*export const getProjectProposalPhasesHandler = async ({
+export const getProjectProposalPhasesHandler = async ({
 	store,
 	params: { project_id, proposal_id },
 }: any) => {
@@ -489,34 +489,17 @@ export const acceptProjectPhaseHandler = async ({
 		error: "Proposal not found",
 		message: "Proposal does not exist",
 	};
-		const phases = await phaseCollection
+	const phases = await phaseCollection
 					.find({
 						proposal_id: { $in: [proposal?._id] },
 					})
-				.toArray();
-			const { _id, ...proposalData } = proposal;
-			return {
-				...proposalData,
-				agency_id: proposal.agency_id.toString(),
-				proposal_id: _id.toString(),
-				project_id: proposal.project_id.toString(),
-				onchain_id: proposal.onchain_id,
-				phases: phases,
-			};
-		}),
-	);
-
+					.toArray();
 	return {
 		success: true,
-		data: proposalMeta.map((proposal) => ({
-			...proposal,
-			agency_id: proposal.agency_id.toString(),
-			proposal_id: proposal.proposal_id,
-			project_id: proposal.project_id.toString(),
-			onchain_id: proposal.onchain_id,
-		})),
+		data: {
+			phases: phases,
+		},
 		error: null,
-		message: "Proposals fetched successfully",
+		message: "Proposal phases fetched successfully",
 	};
 };
-*/
