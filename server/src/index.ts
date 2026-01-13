@@ -38,11 +38,12 @@ import {
 } from "./routes/agency";
 import { generateChatResponse } from "./routes/chat";
 import { ChatRequest } from "./models/chat";
+import { initMetricsHandler } from "./routes/metrics";
 
 const client = new MongoClient(process.env.MONGODB_URI || "");
 const jwtSecret = process.env.JWT_SECRET || "";
 await client.connect();
-const db: Db = client.db(process.env.MONGODB_DB_NAME);
+export const db: Db = client.db(process.env.MONGODB_DB_NAME);
 const userCollection = db.collection("user");
 const projectCollection = db.collection("project");
 const proposalCollection = db.collection("proposal");
@@ -176,6 +177,9 @@ const app = new Elysia()
 			body: SignUpRequest,
 		},
 	)
+	.group("/metrics", (app) => app.get("/init/:agency_id", async ({store: {state}, cookie: {token}, params: {agency_id}}) => {
+		return await initMetricsHandler({store: {state}, cookie: {token}, params: {agency_id}})
+	}))
 	// Project
 	.group("/project", (app) =>
 		app

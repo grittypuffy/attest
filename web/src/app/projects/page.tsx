@@ -1,10 +1,36 @@
 "use client";
 
 import { api } from "@/lib/api";
-import type { User } from "@/lib/types";
-import { ArrowUpRightIcon } from "@phosphor-icons/react";
-import { Funnel, MagnifyingGlass } from "@phosphor-icons/react/dist/ssr";
-import { usePathname, useRouter } from "next/navigation";
+import type { PhaseRegistrationPayload, User } from "@/lib/types";
+import PhaseRegistrationModal from "@components/PhaseRegistrationModal";
+import {
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Chip,
+  CircularProgress,
+  Container,
+  Divider,
+  FormControl,
+  InputAdornment,
+  MenuItem,
+  Select,
+  Stack,
+  TextField,
+  Typography,
+} from "@mui/material";
+import {
+  ArrowUpRight,
+  Buildings,
+  CalendarBlank,
+  FunnelSimple,
+  MagnifyingGlass,
+  MapPin,
+  PlusCircle
+} from "@phosphor-icons/react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 type ProjectStatus = "PROPOSAL" | "ACTIVE" | "COMPLETED";
@@ -13,7 +39,6 @@ interface Project {
   project_id: string;
   project_name: string;
   description: string;
-  // Fields to be populated or mocked until backend supports them
   department?: string;
   status?: ProjectStatus;
   budget?: string;
@@ -23,20 +48,22 @@ interface Project {
 
 export default function ProjectsPage() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterStatus, setFilterStatus] = useState<ProjectStatus | "ALL">(
-    "ALL",
-  );
+  const [filterStatus, setFilterStatus] = useState<ProjectStatus | "ALL">("ALL");
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
-
   const [user, setUser] = useState<User | null>(null);
-
-  const pathname = usePathname();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedProjectForPhases, setSelectedProjectForPhases] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+
   const router = useRouter();
 
   useEffect(() => {
     bootstrapAuth();
+    fetchProjects();
   }, []);
 
   const bootstrapAuth = async () => {
@@ -61,176 +88,285 @@ export default function ProjectsPage() {
     }
   };
 
-  useEffect(() => {
-    console.log("USER STATE:", user);
-  }, [user]);
-
-  useEffect(() => {
-    const fetchProjects = async () => {
-      try {
-        const { data, error } = await api.project.all.get();
-        if (data && !error && data.data) {
-          // Transform the API data to match the UI needs, mocking missing fields
-          const mappedProjects: Project[] = data.data.map((p: any) => ({
-            ...p,
-            department: "Government", // Placeholder
-            status: "ACTIVE", // Placeholder
-            budget: "TBD", // Placeholder
-            date: new Date().toISOString().split("T")[0], // Placeholder
-            location: "National", // Placeholder
-          }));
-          setProjects(mappedProjects);
-        }
-      } catch (err) {
-        console.error("Failed to fetch projects", err);
-      } finally {
-        setLoading(false);
+  const fetchProjects = async () => {
+    try {
+      const { data, error } = await api.project.all.get();
+      if (data && !error && data.data) {
+        const mappedProjects: Project[] = data.data.map((p: any) => ({
+          ...p,
+          department: "Government",
+          status: "ACTIVE",
+          budget: "TBD",
+          date: new Date().toISOString().split("T")[0],
+          location: "National",
+        }));
+        setProjects(mappedProjects);
       }
-    };
+    } catch (err) {
+      console.error("Failed to fetch projects", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetchProjects();
-  }, []);
+  const openPhaseModal = (projectId: string, projectName: string) => {
+    setSelectedProjectForPhases({ id: projectId, name: projectName });
+    setIsModalOpen(true);
+  };
+
+  const closePhaseModal = () => {
+    setIsModalOpen(false);
+    setSelectedProjectForPhases(null);
+  };
+
+  const handleRegisterPhases = async (payload: PhaseRegistrationPayload) => {
+    if (!selectedProjectForPhases) return;
+
+    const proposalId = "proposal-id-placeholder";
+
+    try {
+      const response = await api
+        .project({ project_id: selectedProjectForPhases.id })
+        .proposal({ proposal_id: proposalId })
+        .phase.register.post(payload);
+
+      if (response.data?.success) {
+        alert("Phases registered successfully!");
+      } else {
+        alert("Failed to register phases");
+      }
+    } catch (error) {
+      console.error("Error registering phases:", error);
+      alert("An error occurred while registering phases");
+      throw error;
+    }
+  };
+
+  const getStatusColor = (status: ProjectStatus | undefined) => {
+    switch (status) {
+      case "PROPOSAL":
+        return "secondary";
+      case "ACTIVE":
+        return "success";
+      case "COMPLETED":
+        return "default";
+      default:
+        return "default";
+    }
+  };
 
   const filteredProjects = projects.filter((project) => {
     const matchesSearch =
       project.project_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (project.department || "")
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase());
-    const matchesStatus =
-      filterStatus === "ALL" || project.status === filterStatus;
+      (project.department || "").toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = filterStatus === "ALL" || project.status === filterStatus;
     return matchesSearch && matchesStatus;
   });
 
   return (
-    <div className="py-8 max-w-5xl mx-auto">
-      <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Public Projects</h1>
-          <p className="text-gray-500 mt-1">
-            Browse government initiatives and proposals.
-          </p>
-        </div>
+    <Container maxWidth="lg" sx={{ py: 4 }}>
+      {/* Header Section */}
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h3" fontWeight={700} gutterBottom>
+          Public Projects
+        </Typography>
+        <Typography variant="body1" color="text.secondary">
+          Browse government initiatives and proposals.
+        </Typography>
+      </Box>
 
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-              <MagnifyingGlass size={20} />
-            </div>
-            <input
-              type="text"
-              placeholder="Search projects..."
-              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none w-full sm:w-64"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
+      {/* Search and Filter Section */}
+      <Stack
+        direction={{ xs: "column", sm: "row" }}
+        spacing={2}
+        sx={{ mb: 4 }}
+        alignItems={{ xs: "stretch", sm: "center" }}
+      >
+        <TextField
+          placeholder="Search projects..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          fullWidth
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <MagnifyingGlass size={20} />
+              </InputAdornment>
+            ),
+          }}
+          sx={{ maxWidth: { sm: 400 } }}
+        />
 
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-              <Funnel size={20} />
-            </div>
-            <select
-              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white w-full sm:w-auto appearance-none"
-              value={filterStatus}
-              onChange={(e) =>
-                setFilterStatus(e.target.value as ProjectStatus | "ALL")
-              }
-            >
-              <option value="ALL">All Statuses</option>
-              <option value="PROPOSAL">Proposals</option>
-              <option value="ACTIVE">Active</option>
-              <option value="COMPLETED">Completed</option>
-            </select>
-          </div>
-        </div>
-      </div>
+        <FormControl sx={{ minWidth: 200 }}>
+          <Select
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value as ProjectStatus | "ALL")}
+            displayEmpty
+            startAdornment={
+              <InputAdornment position="start">
+                <FunnelSimple size={20} />
+              </InputAdornment>
+            }
+          >
+            <MenuItem value="ALL">All Statuses</MenuItem>
+            <MenuItem value="PROPOSAL">Proposals</MenuItem>
+            <MenuItem value="ACTIVE">Active</MenuItem>
+            <MenuItem value="COMPLETED">Completed</MenuItem>
+          </Select>
+        </FormControl>
+      </Stack>
 
+      {/* Loading State */}
       {loading ? (
-        <div className="flex justify-center items-center py-20">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-        </div>
+        <Box sx={{ display: "flex", justifyContent: "center", py: 10 }}>
+          <CircularProgress size={48} />
+        </Box>
       ) : (
-        <div className="grid gap-6">
+        <Stack spacing={3}>
+          {/* Projects List */}
           {filteredProjects.map((project) => (
-            <div
+            <Card
               key={project.project_id}
-              className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow"
+              elevation={0}
+              sx={{
+                border: 1,
+                borderColor: "divider",
+                borderRadius: 2,
+                transition: "box-shadow 0.2s",
+                "&:hover": {
+                  boxShadow: 3,
+                },
+              }}
             >
-              <div className="flex flex-col md:flex-row justify-between md:items-start gap-4 mb-4">
-                <div>
-                  <div className="flex items-center gap-3 mb-2">
-                    <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${project.status === "PROPOSAL"
-                          ? "bg-purple-100 text-purple-800"
-                          : project.status === "ACTIVE"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-gray-100 text-gray-800"
-                        }`}
-                    >
-                      {project.status}
-                    </span>
-                    <span className="text-sm text-gray-500">
-                      {project.department}
-                    </span>
-                  </div>
-                  <h3 className="text-xl font-semibold text-gray-900">
-                    {project.project_name}
-                  </h3>
-                </div>
-                <div className="text-right md:text-left">
-                  <div className="text-2xl font-bold text-gray-900">
-                    {project.budget}
-                  </div>
-                  <div className="text-sm text-gray-500">Budget</div>
-                </div>
-              </div>
+              <CardContent sx={{ p: 3 }}>
+                {/* Project Header */}
+                <Stack
+                  direction={{ xs: "column", md: "row" }}
+                  justifyContent="space-between"
+                  spacing={2}
+                  sx={{ mb: 2 }}
+                >
+                  <Box>
+                    <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 1 }}>
+                      <Chip
+                        label={project.status}
+                        color={getStatusColor(project.status)}
+                        size="small"
+                      />
+                      <Stack direction="row" spacing={0.5} alignItems="center">
+                        <Buildings size={16} weight="duotone" />
+                        <Typography variant="body2" color="text.secondary">
+                          {project.department}
+                        </Typography>
+                      </Stack>
+                    </Stack>
+                    <Typography variant="h5" fontWeight={600}>
+                      {project.project_name}
+                    </Typography>
+                  </Box>
 
-              <p className="text-gray-600 mb-4">{project.description}</p>
+                  <Box sx={{ textAlign: { xs: "left", md: "right" } }}>
+                    <Typography variant="h4" fontWeight={700}>
+                      {project.budget}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Budget
+                    </Typography>
+                  </Box>
+                </Stack>
 
-              <div className="flex flex-wrap items-center justify-between gap-4 text-sm text-gray-500 border-t border-gray-100 pt-4 mt-2">
-                <div className="flex gap-3">
-                  <div className="flex items-center gap-1">
-                    <span>📍 {project.location}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <span>📅 {project.date}</span>
-                  </div>
-                </div>
-                <div>
-                  <a
+                {/* Project Description */}
+                <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+                  {project.description}
+                </Typography>
+
+                <Divider sx={{ mb: 2 }} />
+
+                {/* Project Meta Info */}
+                <Stack
+                  direction={{ xs: "column", sm: "row" }}
+                  justifyContent="space-between"
+                  alignItems={{ xs: "flex-start", sm: "center" }}
+                  spacing={2}
+                >
+                  <Stack direction="row" spacing={3}>
+                    <Stack direction="row" spacing={0.5} alignItems="center">
+                      <MapPin size={18} weight="duotone" />
+                      <Typography variant="body2" color="text.secondary">
+                        {project.location}
+                      </Typography>
+                    </Stack>
+                    <Stack direction="row" spacing={0.5} alignItems="center">
+                      <CalendarBlank size={18} weight="duotone" />
+                      <Typography variant="body2" color="text.secondary">
+                        {project.date}
+                      </Typography>
+                    </Stack>
+                  </Stack>
+
+                  <Button
+                    component={Link}
                     href={`/project/${project.project_id}`}
-                    className="text-blue-600 hover:underline"
+                    endIcon={<ArrowUpRight size={18} />}
+                    sx={{ textTransform: "none" }}
                   >
-                    <span className="inline-flex items-center gap-1">
-                      View Details <ArrowUpRightIcon />
-                    </span>
-                  </a>
-                </div>
-              </div>
+                    View Details
+                  </Button>
+                </Stack>
 
-              {isAuthenticated && user?.role === "Agency" && (
-                <div className="flex justify-end mt-4">
-                  <button
-                    onClick={() => router.push("/proposal/create")}
-                    className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-emerald-600 hover:bg-emerald-700 transition-colors shadow-sm cursor-pointer"
-                  >
-                    Create Proposal
-                  </button>
-                </div>
-              )}
-            </div>
+                {isAuthenticated && user?.role === "Government" && (
+                  <Box sx={{ mt: 3, display: "flex", justifyContent: "flex-end" }}>
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      startIcon={<PlusCircle size={20} />}
+                      onClick={() => openPhaseModal(project.project_id, project.project_name)}
+                      sx={{ textTransform: "none" }}
+                    >
+                      Register Phases
+                    </Button>
+                  </Box>
+                )}
+              </CardContent>
+            </Card>
           ))}
 
+          {/* Empty State */}
           {filteredProjects.length === 0 && (
-            <div className="text-center py-12 bg-white rounded-xl border border-dashed border-gray-300">
-              <p className="text-gray-500">
-                No projects found matching your criteria.
-              </p>
-            </div>
+            <Card
+              elevation={0}
+              sx={{
+                border: 2,
+                borderStyle: "dashed",
+                borderColor: "divider",
+                borderRadius: 2,
+                py: 8,
+              }}
+            >
+              <CardContent>
+                <Typography
+                  variant="body1"
+                  color="text.secondary"
+                  align="center"
+                >
+                  No projects found matching your criteria.
+                </Typography>
+              </CardContent>
+            </Card>
           )}
-        </div>
+        </Stack>
       )}
-    </div>
+
+      {/* Phase Registration Modal */}
+      {selectedProjectForPhases && (
+        <PhaseRegistrationModal
+          isOpen={isModalOpen}
+          onClose={closePhaseModal}
+          onSubmit={handleRegisterPhases}
+          projectId={selectedProjectForPhases.id}
+          projectName={selectedProjectForPhases.name}
+        />
+      )}
+    </Container>
   );
 }

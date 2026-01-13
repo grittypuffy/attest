@@ -6,3 +6,9 @@ export const MetricsRequest = t.Object({
 	noOfAcceptedProposals: t.Integer(),
 	quality: t.Number(),
 });
+
+export interface Metrics {
+	completedPhaseOnTime: number;
+	noOfAcceptedProposals: number;
+	quality: number
+}
