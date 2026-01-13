@@ -3,7 +3,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import { api } from "@/lib/api";
-
+import ConnectWallet from "./ConnectWallet";
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -78,7 +78,7 @@ export default function Navbar() {
     if (!user) return [];
 
     const baseRoute = user.role === "Agency" ? "/agency" : "/government";
-    
+
     return [
       {
         name: "Dashboard",
@@ -124,8 +124,10 @@ export default function Navbar() {
               </Link>
             ))}
           </div>
-          {isAuthenticated && user ? (
-            <div className="relative" ref={menuRef}>
+          <div className="flex items-center gap-4">
+            <ConnectWallet />
+            {isAuthenticated && user ? (
+              <div className="relative" ref={menuRef}>
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
                 className="flex items-center space-x-2 focus:outline-none"
@@ -175,23 +177,24 @@ export default function Navbar() {
 
                   <div className="border-t border-gray-200 mt-1 pt-1">
                     <button
-                      onClick={handleLogout}
-                      className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                    >
-                      Logout
-                    </button>
-                  </div>
+                        onClick={handleLogout}
+                        className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                      >
+                        Logout
+                      </button>
+                    </div>
                 </div>
               )}
             </div>
           ) : (
-            <Link
-              href="/auth"
-              className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors shadow-sm"
-            >
-              Sign In
-            </Link>
-          )}
+              <Link
+                href="/auth"
+                className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors shadow-sm"
+              >
+                Sign In
+              </Link>
+            )}
+          </div>
         </div>
       </div>
     </nav>

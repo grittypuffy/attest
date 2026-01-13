@@ -1,4 +1,3 @@
-
 export const PHASES = [
   {
     proposal_id: "dummy-proposal-001",
@@ -11,15 +10,16 @@ export const PHASES = [
         description: "Initial planning and design phase for the project",
         duration: "3 months",
         budget: 50000,
-        status: "completed"
+        status: "completed",
       },
       {
         phase_id: "phase-002",
         phase_name: "Development",
-        description: "Core development phase with implementation of key features",
+        description:
+          "Core development phase with implementation of key features",
         duration: "6 months",
         budget: 150000,
-        status: "in_progress"
+        status: "in_progress",
       },
       {
         phase_id: "phase-003",
@@ -27,9 +27,9 @@ export const PHASES = [
         description: "Quality assurance testing and production deployment",
         duration: "2 months",
         budget: 40000,
-        status: "pending"
-      }
-    ]
+        status: "pending",
+      },
+    ],
   },
   {
     proposal_id: "dummy-proposal-002",
@@ -42,7 +42,7 @@ export const PHASES = [
         description: "Project discovery and requirements gathering",
         duration: "1 month",
         budget: 25000,
-        status: "completed"
+        status: "completed",
       },
       {
         phase_id: "phase-005",
@@ -50,8 +50,8 @@ export const PHASES = [
         description: "Full implementation of project requirements",
         duration: "8 months",
         budget: 200000,
-        status: "pending"
-      }
-    ]
-  }
+        status: "pending",
+      },
+    ],
+  },
 ];

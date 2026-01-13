@@ -13,7 +13,7 @@ import {
   Tab,
   Tabs,
   TextField,
-  Typography
+  Typography,
 } from "@mui/material";
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
@@ -25,14 +25,14 @@ interface ExtendedProposal extends Proposal {
   proposal_description: any;
 }
 
-const Editor = dynamic(() => import("@components/agency/ProposalEditor"), { ssr: false });
+const Editor = dynamic(() => import("@components/agency/ProposalEditor"), {
+  ssr: false,
+});
 
 export const toEditorDoc = (input: any) => {
-  if (!input)
-    return { time: Date.now(), blocks: [], version: "2.22.2" };
+  if (!input) return { time: Date.now(), blocks: [], version: "2.22.2" };
 
-  if (typeof input === "object" && input.blocks)
-    return input; // already EditorJS
+  if (typeof input === "object" && input.blocks) return input; // already EditorJS
 
   return {
     time: Date.now(),
@@ -47,7 +47,8 @@ export const toEditorDoc = (input: any) => {
 };
 
 export default function AgencyProposalView() {
-  const [selectedProposal, setSelectedProposal] = useState<ExtendedProposal | null>(null);
+  const [selectedProposal, setSelectedProposal] =
+    useState<ExtendedProposal | null>(null);
   const [tab, setTab] = useState(0);
   const [proposals, setProposals] = useState<ExtendedProposal[]>([]);
 
@@ -59,21 +60,25 @@ export default function AgencyProposalView() {
       const agencyId = userRes.data.data?.id;
       if (!agencyId) return;
 
-      const proposalsRes = await api.agency({ agency_id: agencyId }).proposals.get();
+      const proposalsRes = await api
+        .agency({ agency_id: agencyId })
+        .proposals.get();
       if (!proposalsRes.data?.success) return;
 
       const hydrated = await Promise.all(
         proposalsRes.data.data.map(async (p) => {
-          const projectRes = await api.project({ project_id: p.project_id }).get();
+          const projectRes = await api
+            .project({ project_id: p.project_id })
+            .get();
           const project = projectRes.data?.data;
 
           return {
             ...p,
             project_name: project?.project_name || "Unknown",
             project_description: project?.description || "",
-            proposal_description: toEditorDoc((p as any).description)
+            proposal_description: toEditorDoc((p as any).description),
           } as unknown as ExtendedProposal;
-        })
+        }),
       );
 
       setProposals(hydrated);
@@ -95,7 +100,10 @@ export default function AgencyProposalView() {
             <ListItemButton
               key={p.proposal_id}
               selected={selectedProposal?.proposal_id === p.proposal_id}
-              onClick={() => { setSelectedProposal(p); setTab(0); }}
+              onClick={() => {
+                setSelectedProposal(p);
+                setTab(0);
+              }}
             >
               <ListItemText
                 primary={p.proposal_name}
@@ -191,23 +199,22 @@ export default function AgencyProposalView() {
                       fullWidth
                       InputProps={{ readOnly: true }}
                     />
-
                   </Grid>
-
                 </Grid>
               )}
 
               {tab === 1 && (
-                <Editor
-                  data={
-                    selectedProposal.proposal_description
-                  }
-                />
+                <Editor data={selectedProposal.proposal_description} />
               )}
             </Box>
           </>
         ) : (
-          <Box height="100%" display="flex" alignItems="center" justifyContent="center">
+          <Box
+            height="100%"
+            display="flex"
+            alignItems="center"
+            justifyContent="center"
+          >
             <Typography color="text.secondary">Select a proposal</Typography>
           </Box>
         )}

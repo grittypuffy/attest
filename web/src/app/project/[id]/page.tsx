@@ -1,9 +1,14 @@
 "use client";
 
 import { api } from "@/lib/api";
-import { Project, Proposal } from "@/lib/types";
+import { PhaseRegistrationPayload, Project, User } from "@/lib/types";
+import { Proposal } from "@/lib/types/proposal";
 import Editor from "@components/Editor";
+import PhaseRegistrationModal from "@components/PhaseRegistrationModal";
 import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
   Box,
   Button,
   Card,
@@ -17,13 +22,19 @@ import {
 import {
   ArrowLeft,
   Buildings,
+  Calendar,
+  CaretDown,
   CheckCircle,
   CurrencyInrIcon,
   FileText,
   ListBullets,
-  PencilLine
+  PencilLine,
 } from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
+import { useAccount, useSwitchChain, useWalletClient, usePublicClient } from "wagmi";
+import { encodeFunctionData, parseEther, hexToNumber } from "viem";
+import { ACTIVE_CHAIN_ID, ATTEST_MANAGER_ADDRESS } from "@/lib/constants";
+import AttestManagerABI from "@/abi/AttestManager.json";
 
 export default function ProjectPage({
   params,
@@ -33,7 +44,7 @@ export default function ProjectPage({
   const [project, setProject] = useState<Project | null>(null);
   const [proposals, setProposals] = useState<Proposal[] | null>([]);
   const [selectedProposal, setSelectedProposal] = useState<Proposal | null>(
-    null
+    null,
   );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -66,7 +77,7 @@ export default function ProjectPage({
         }
 
         if (proposalsRes.data?.data) {
-          setProposals(proposalsRes.data.data);
+          setProposals(proposalsRes.data.data as any);
           // setProposals(PHASES);
           console.log("Fetched proposals:", proposalsRes.data.data);
         }
@@ -112,7 +123,7 @@ export default function ProjectPage({
   return (
     <ProjectDetails
       project={project}
-      proposals={proposals}
+      proposals={proposals || []}
       selectedProposal={selectedProposal}
       onSelectProposal={setSelectedProposal}
     />
@@ -132,6 +143,12 @@ const ProjectDetails = ({
 }) => {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [selectedTab, setSelectedTab] = useState<number>(0);
+  const [user, setUser] = useState<User | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedProposalForPhases, setSelectedProposalForPhases] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -142,16 +159,51 @@ const ProjectDetails = ({
           (data?.data?.role === "Agency" || data?.data?.role === "Government")
         ) {
           setUserRole(data.data.role);
+          setUser(data.data);
         } else {
           setUserRole(null);
+          setUser(null);
         }
       } catch (error) {
         setUserRole(null);
+        setUser(null);
       }
     };
 
     checkAuth();
   }, []);
+
+  const openPhaseModal = (proposalId: string, proposalName: string) => {
+    setSelectedProposalForPhases({ id: proposalId, name: proposalName });
+    setIsModalOpen(true);
+  };
+
+  const closePhaseModal = () => {
+    setIsModalOpen(false);
+    setSelectedProposalForPhases(null);
+  };
+
+  const handleRegisterPhases = async (payload: PhaseRegistrationPayload) => {
+    if (!selectedProposalForPhases) return;
+
+    try {
+      const response = await api
+        .project({ project_id: project.project_id })
+        .proposal({ proposal_id: selectedProposalForPhases.id })
+        .phase.register.post(payload);
+
+      if (response.data?.success) {
+        alert("Phases registered successfully!");
+        closePhaseModal();
+      } else {
+        alert("Failed to register phases");
+      }
+    } catch (error) {
+      console.error("Error registering phases:", error);
+      alert("An error occurred while registering phases");
+      throw error;
+    }
+  };
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setSelectedTab(newValue);
@@ -159,7 +211,8 @@ const ProjectDetails = ({
     onSelectProposal(null);
   };
 
-  const isAgencyOrGovernment = userRole === "Agency" || userRole === "Government";
+  const isAgencyOrGovernment =
+    userRole === "Agency" || userRole === "Government";
 
   return (
     <div className="min-w-6xl p-4 md:p-6 w-full">
@@ -208,6 +261,8 @@ const ProjectDetails = ({
               <ProposalDetailsView
                 proposal={selectedProposal}
                 onBack={() => onSelectProposal(null)}
+                userRole={userRole}
+                onRegisterPhases={openPhaseModal}
               />
             ) : (
               <ProposalsGridView
@@ -219,14 +274,25 @@ const ProjectDetails = ({
         )}
 
         {selectedTab === 1 && isAgencyOrGovernment && (
-          <SubmitProposalForm projectId={project.project_id} />
+          <SubmitProposalForm projectId={project.project_id} projectOnchainId={project.onchain_id} />
         )}
       </div>
+
+      {/* Phase Registration Modal */}
+      {selectedProposalForPhases && (
+        <PhaseRegistrationModal
+          isOpen={isModalOpen}
+          onClose={closePhaseModal}
+          onSubmit={handleRegisterPhases}
+          projectId={project.project_id}
+          projectName={project.project_name}
+        />
+      )}
     </div>
   );
 };
 
-const SubmitProposalForm = ({ projectId }: { projectId: string }) => {
+const SubmitProposalForm = ({ projectId, projectOnchainId }: { projectId: string, projectOnchainId?: number }) => {
   const [formData, setFormData] = useState({
     proposal_name: "",
     description: "",
@@ -240,11 +306,18 @@ const SubmitProposalForm = ({ projectId }: { projectId: string }) => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const { chainId, address: userAddress } = useAccount();
+  const { switchChain } = useSwitchChain();
+  const { data: walletClient } = useWalletClient();
+  const publicClient = usePublicClient();
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
     const { name, value, type } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: type === 'number' ? (value === '' ? '' : value) : value
+      [name]: type === "number" ? (value === "" ? "" : value) : value,
     }));
   };
 
@@ -272,15 +345,72 @@ const SubmitProposalForm = ({ projectId }: { projectId: string }) => {
     }
 
     try {
-      const { data, error: apiError } = await api.project({ project_id: projectId }).proposal.register.post(payload);
+      if (!walletClient) throw new Error("Wallet not connected");
+      if (typeof projectOnchainId === 'undefined') throw new Error("Project on-chain ID missing");
+
+      // 0. Network Sync
+      if (chainId !== ACTIVE_CHAIN_ID) {
+        switchChain({ chainId: ACTIVE_CHAIN_ID });
+        setLoading(false);
+        return;
+      }
+
+      // 1. On-Chain Transaction: submitProposal(uint256 projectId, string metadataURI, PhaseInput[] phases)
+      // For now, we'll create simple phases based on no_of_phases
+      const phaseBudget = parseEther((payload.total_budget / payload.no_of_phases).toString());
+      const phases = Array.from({ length: payload.no_of_phases }, (_, i) => ({
+        description: `Phase ${i + 1}`,
+        allocatedAmount: phaseBudget,
+      }));
+
+      const encodedData = encodeFunctionData({
+        abi: AttestManagerABI,
+        functionName: "submitProposal",
+        args: [BigInt(projectOnchainId), payload.proposal_name, phases],
+      });
+
+      const hash = await walletClient.sendTransaction({
+        account: userAddress,
+        to: ATTEST_MANAGER_ADDRESS as `0x${string}`,
+        data: encodedData,
+        chain: walletClient.chain,
+        kzg: undefined,
+      });
+
+      console.log("On-chain proposal submission sent:", hash);
+
+      if (!publicClient) throw new Error("Public client missing");
+      const receipt = await publicClient.waitForTransactionReceipt({ hash });
+      
+      let onchainProposalId: number | undefined;
+      if (receipt.logs.length > 0) {
+        // More robust: find the log that has 3 topics (ProposalSubmitted signature + 2 indexed params)
+        const proposalLog = receipt.logs.find(l => l.topics.length >= 2);
+        if (proposalLog && proposalLog.topics[1]) {
+          onchainProposalId = hexToNumber(proposalLog.topics[1]);
+        }
+      }
+
+      // 2. Database record
+      const { data, error: apiError } = await api
+        .project({ project_id: projectId })
+        .proposal.register.post({
+          ...payload,
+          onchain_id: onchainProposalId
+        });
 
       if (apiError) {
         const errorDetails = apiError.value as any;
-        throw new Error(errorDetails?.message || (typeof errorDetails === 'string' ? errorDetails : "Failed to submit proposal"));
+        throw new Error(
+          errorDetails?.message ||
+            (typeof errorDetails === "string"
+              ? errorDetails
+              : "Failed to submit proposal"),
+        );
       }
 
       if (data?.success) {
-        setSuccess("Proposal submitted successfully!");
+        setSuccess("Proposal submitted successfully on-chain and off-chain!");
         setFormData({
           proposal_name: "",
           description: "",
@@ -307,7 +437,10 @@ const SubmitProposalForm = ({ projectId }: { projectId: string }) => {
       </Typography>
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <label htmlFor="proposal_name" className="block text-sm font-medium text-gray-700 mb-1">
+          <label
+            htmlFor="proposal_name"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
             Proposal Name
           </label>
           <input
@@ -322,7 +455,10 @@ const SubmitProposalForm = ({ projectId }: { projectId: string }) => {
         </div>
 
         <div>
-          <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+          <label
+            htmlFor="description"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
             Description
           </label>
           <textarea
@@ -337,7 +473,10 @@ const SubmitProposalForm = ({ projectId }: { projectId: string }) => {
         </div>
 
         <div>
-          <label htmlFor="summary" className="block text-sm font-medium text-gray-700 mb-1">
+          <label
+            htmlFor="summary"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
             Summary (Optional)
           </label>
           <textarea
@@ -352,7 +491,10 @@ const SubmitProposalForm = ({ projectId }: { projectId: string }) => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label htmlFor="total_budget" className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="total_budget"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Total Budget
             </label>
             <input
@@ -368,7 +510,10 @@ const SubmitProposalForm = ({ projectId }: { projectId: string }) => {
           </div>
 
           <div>
-            <label htmlFor="timeline" className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="timeline"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Timeline
             </label>
             <input
@@ -386,7 +531,10 @@ const SubmitProposalForm = ({ projectId }: { projectId: string }) => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label htmlFor="no_of_phases" className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="no_of_phases"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Number of Phases
             </label>
             <input
@@ -402,7 +550,10 @@ const SubmitProposalForm = ({ projectId }: { projectId: string }) => {
           </div>
 
           <div>
-            <label htmlFor="outcome" className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="outcome"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Expected Outcome
             </label>
             <input
@@ -417,8 +568,16 @@ const SubmitProposalForm = ({ projectId }: { projectId: string }) => {
           </div>
         </div>
 
-        {error && <div className="p-3 bg-red-50 text-red-700 text-sm rounded-lg">{error}</div>}
-        {success && <div className="p-3 bg-green-50 text-green-700 text-sm rounded-lg">{success}</div>}
+        {error && (
+          <div className="p-3 bg-red-50 text-red-700 text-sm rounded-lg">
+            {error}
+          </div>
+        )}
+        {success && (
+          <div className="p-3 bg-green-50 text-green-700 text-sm rounded-lg">
+            {success}
+          </div>
+        )}
 
         <div className="flex justify-end pt-4">
           <Button
@@ -505,7 +664,11 @@ const ProposalCard = ({
             </div>
           </div>
 
-          <Typography variant="h6" component="h3" className="font-semibold mb-2">
+          <Typography
+            variant="h6"
+            component="h3"
+            className="font-semibold mb-2"
+          >
             Proposal #{proposal.proposal_name.slice(0, 8)}
           </Typography>
 
@@ -530,9 +693,13 @@ const ProposalCard = ({
 const ProposalDetailsView = ({
   proposal,
   onBack,
+  userRole,
+  onRegisterPhases,
 }: {
   proposal: Proposal;
   onBack: () => void;
+  userRole: string | null;
+  onRegisterPhases: (proposalId: string, proposalName: string) => void;
 }) => {
   const [selectedTab, setSelectedTab] = useState(0);
 
@@ -543,12 +710,17 @@ const ProposalDetailsView = ({
   // Parse description as EditorJS data or fallback to empty blocks
   const parseDescription = () => {
     try {
-      if (typeof proposal.description === 'string') {
+      if (typeof proposal.description === "string") {
         return JSON.parse(proposal.description);
       }
       return proposal.description || { time: Date.now(), blocks: [] };
     } catch {
-      return { time: Date.now(), blocks: [{ type: "paragraph", data: { text: proposal.description || "" } }] };
+      return {
+        time: Date.now(),
+        blocks: [
+          { type: "paragraph", data: { text: proposal.description || "" } },
+        ],
+      };
     }
   };
 
@@ -566,7 +738,7 @@ const ProposalDetailsView = ({
       {/* Proposal Header */}
       <div className="mb-6 pb-6 border-b border-gray-200">
         <div className="flex items-start justify-between mb-4">
-          <div>
+          <div className="flex-1">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
               Proposal Details
             </h2>
@@ -574,11 +746,25 @@ const ProposalDetailsView = ({
               Proposal ID: {proposal.proposal_id}
             </Typography>
           </div>
-          <Chip
-            label="Active"
-            color="success"
-            icon={<CheckCircle size={16} />}
-          />
+          <div className="flex items-center gap-3">
+            <Chip
+              label="Active"
+              color="success"
+              icon={<CheckCircle size={16} />}
+            />
+            {userRole === "Government" && (
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={() =>
+                  onRegisterPhases(proposal.proposal_id, proposal.proposal_name)
+                }
+                sx={{ textTransform: "none" }}
+              >
+                Register Phases
+              </Button>
+            )}
+          </div>
         </div>
 
         <div className="bg-blue-50 rounded-lg p-4">
@@ -619,6 +805,7 @@ const ProposalDetailsView = ({
         >
           <Tab label="Details" />
           <Tab label="Description" />
+          <Tab label="Phases" />
         </Tabs>
 
         {/* Tab Content */}
@@ -632,7 +819,10 @@ const ProposalDetailsView = ({
 
               <div className="space-y-4">
                 <div className="bg-gray-50 rounded-lg p-4">
-                  <Typography variant="subtitle2" className="font-semibold mb-1 text-gray-700">
+                  <Typography
+                    variant="subtitle2"
+                    className="font-semibold mb-1 text-gray-700"
+                  >
                     Proposal Name
                   </Typography>
                   <Typography variant="body1" color="text.secondary">
@@ -641,7 +831,10 @@ const ProposalDetailsView = ({
                 </div>
 
                 <div className="bg-gray-50 rounded-lg p-4">
-                  <Typography variant="subtitle2" className="font-semibold mb-1 text-gray-700">
+                  <Typography
+                    variant="subtitle2"
+                    className="font-semibold mb-1 text-gray-700"
+                  >
                     Summary
                   </Typography>
                   <Typography variant="body1" color="text.secondary">
@@ -650,7 +843,10 @@ const ProposalDetailsView = ({
                 </div>
 
                 <div className="bg-gray-50 rounded-lg p-4">
-                  <Typography variant="subtitle2" className="font-semibold mb-1 text-gray-700">
+                  <Typography
+                    variant="subtitle2"
+                    className="font-semibold mb-1 text-gray-700"
+                  >
                     Outcome
                   </Typography>
                   <Typography variant="body1" color="text.secondary">
@@ -660,19 +856,25 @@ const ProposalDetailsView = ({
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="bg-gray-50 rounded-lg p-4">
-                    <Typography variant="subtitle2" className="font-semibold mb-1 text-gray-700">
+                    <Typography
+                      variant="subtitle2"
+                      className="font-semibold mb-1 text-gray-700"
+                    >
                       Total Budget
                     </Typography>
                     <Typography variant="body1" color="text.secondary">
-                      <span
-                        className="inline-flex gap-1">
-                        <CurrencyInrIcon /> {proposal.total_budget?.toLocaleString() || "N/A"}
+                      <span className="inline-flex gap-1">
+                        <CurrencyInrIcon />{" "}
+                        {proposal.total_budget?.toLocaleString() || "N/A"}
                       </span>
                     </Typography>
                   </div>
 
                   <div className="bg-gray-50 rounded-lg p-4">
-                    <Typography variant="subtitle2" className="font-semibold mb-1 text-gray-700">
+                    <Typography
+                      variant="subtitle2"
+                      className="font-semibold mb-1 text-gray-700"
+                    >
                       Number of Phases
                     </Typography>
                     <Typography variant="body1" color="text.secondary">
@@ -682,7 +884,10 @@ const ProposalDetailsView = ({
                 </div>
 
                 <div className="bg-gray-50 rounded-lg p-4">
-                  <Typography variant="subtitle2" className="font-semibold mb-1 text-gray-700">
+                  <Typography
+                    variant="subtitle2"
+                    className="font-semibold mb-1 text-gray-700"
+                  >
                     Timeline
                   </Typography>
                   <Typography variant="body1" color="text.secondary">
@@ -691,7 +896,10 @@ const ProposalDetailsView = ({
                 </div>
 
                 <div className="bg-gray-50 rounded-lg p-4">
-                  <Typography variant="subtitle2" className="font-semibold mb-1 text-gray-700">
+                  <Typography
+                    variant="subtitle2"
+                    className="font-semibold mb-1 text-gray-700"
+                  >
                     Status
                   </Typography>
                   <Chip
@@ -718,6 +926,170 @@ const ProposalDetailsView = ({
               <Box className="bg-white rounded-lg border border-gray-200 p-6">
                 <Editor data={parseDescription()} />
               </Box>
+            </Box>
+          )}
+
+          {/* Phases Tab */}
+          {selectedTab === 2 && (
+            <Box>
+              <Typography variant="h6" className="font-bold mb-4 text-gray-900">
+                Project Phases
+              </Typography>
+              {proposal.phases && proposal.phases.length > 0 ? (
+                <Box className="space-y-2">
+                  {proposal.phases.map((phase: any, index: number) => (
+                    <Accordion
+                      key={index}
+                      sx={{
+                        border: "1px solid #e5e7eb",
+                        borderRadius: "8px !important",
+                        "&:before": { display: "none" },
+                        boxShadow: "none",
+                        "&.Mui-expanded": {
+                          margin: "8px 0 !important",
+                        },
+                      }}
+                    >
+                      <AccordionSummary
+                        expandIcon={<CaretDown size={20} />}
+                        sx={{
+                          "& .MuiAccordionSummary-content": {
+                            alignItems: "center",
+                            gap: 2,
+                          },
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 2,
+                            width: "100%",
+                          }}
+                        >
+                          <Chip
+                            label={`Phase ${phase.number || index + 1}`}
+                            color="primary"
+                            size="small"
+                          />
+                          <Typography variant="subtitle1" fontWeight={600}>
+                            {phase.title || "Untitled Phase"}
+                          </Typography>
+                        </Box>
+                      </AccordionSummary>
+                      <AccordionDetails>
+                        <Box sx={{ width: "100%", p: 2 }}>
+                          <div className="space-y-4">
+                            <div className="bg-gray-50 rounded-lg p-4">
+                              <Typography
+                                variant="subtitle2"
+                                className="font-semibold mb-1 text-gray-700"
+                              >
+                                Description
+                              </Typography>
+                              <Typography
+                                variant="body2"
+                                color="text.secondary"
+                              >
+                                {phase.description || "No description provided"}
+                              </Typography>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div className="bg-gray-50 rounded-lg p-4">
+                                <Typography
+                                  variant="subtitle2"
+                                  className="font-semibold mb-1 text-gray-700"
+                                >
+                                  Budget
+                                </Typography>
+                                <Typography
+                                  variant="body2"
+                                  color="text.secondary"
+                                >
+                                  <span className="inline-flex items-center gap-1">
+                                    <CurrencyInrIcon size={16} />
+                                    {phase.budget?.toLocaleString() || "N/A"}
+                                  </span>
+                                </Typography>
+                              </div>
+
+                              <div className="bg-gray-50 rounded-lg p-4">
+                                <Typography
+                                  variant="subtitle2"
+                                  className="font-semibold mb-1 text-gray-700"
+                                >
+                                  Timeline
+                                </Typography>
+                                <Typography
+                                  variant="body2"
+                                  color="text.secondary"
+                                >
+                                  <span className="inline-flex items-center gap-1">
+                                    <Calendar size={16} />
+                                    {phase.start_date && phase.end_date
+                                      ? `${new Date(phase.start_date).toLocaleDateString()} - ${new Date(phase.end_date).toLocaleDateString()}`
+                                      : "N/A"}
+                                  </span>
+                                </Typography>
+                              </div>
+                            </div>
+
+                            {phase.validating_documents &&
+                              phase.validating_documents.length > 0 && (
+                                <div className="bg-gray-50 rounded-lg p-4">
+                                  <Typography
+                                    variant="subtitle2"
+                                    className="font-semibold mb-2 text-gray-700"
+                                  >
+                                    Validating Documents
+                                  </Typography>
+                                  <div className="flex flex-wrap gap-2">
+                                    {phase.validating_documents.map(
+                                      (doc: string, docIndex: number) => (
+                                        <Chip
+                                          key={docIndex}
+                                          label={doc}
+                                          size="small"
+                                          icon={<FileText size={14} />}
+                                          variant="outlined"
+                                        />
+                                      ),
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+                          </div>
+                        </Box>
+                      </AccordionDetails>
+                    </Accordion>
+                  ))}
+                </Box>
+              ) : (
+                <Box
+                  sx={{
+                    textAlign: "center",
+                    py: 8,
+                    bgcolor: "grey.50",
+                    borderRadius: 2,
+                    border: "2px dashed",
+                    borderColor: "grey.300",
+                  }}
+                >
+                  <Typography variant="body1" color="text.secondary">
+                    No phases registered for this proposal yet.
+                  </Typography>
+                  {userRole === "Government" && (
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ mt: 1 }}
+                    >
+                      Click "Register Phases" to add phases to this proposal.
+                    </Typography>
+                  )}
+                </Box>
+              )}
             </Box>
           )}
         </Box>

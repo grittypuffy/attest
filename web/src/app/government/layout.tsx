@@ -1,6 +1,11 @@
 "use client";
 
-import { Buildings, CheckCircle, FilePlus, UsersThree } from "@phosphor-icons/react/dist/ssr";
+import {
+  Buildings,
+  CheckCircle,
+  FilePlus,
+  UsersThree,
+} from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -13,9 +18,21 @@ export default function GovernmentLayout({
 
   const navItems = [
     { name: "Dashboard", href: "/government", icon: Buildings },
-    { name: "Create Project", href: "/government/projects/create", icon: FilePlus },
-    { name: "Create Agency", href: "/government/agencies/create", icon: UsersThree },
-    { name: "Approve Proposals", href: "/government/proposals", icon: CheckCircle },
+    {
+      name: "Create Project",
+      href: "/government/projects/create",
+      icon: FilePlus,
+    },
+    {
+      name: "Create Agency",
+      href: "/government/agencies/create",
+      icon: UsersThree,
+    },
+    {
+      name: "Approve Proposals",
+      href: "/government/proposals",
+      icon: CheckCircle,
+    },
     // Phases approval might be better nested under projects or proposals, but keeping it top-level for now as requested
     { name: "Approve Phases", href: "/government/phases", icon: CheckCircle },
   ];
@@ -35,10 +52,11 @@ export default function GovernmentLayout({
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors ${isActive
-                  ? "bg-blue-50 text-blue-700"
-                  : "text-gray-700 hover:bg-gray-100"
-                  }`}
+                className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
+                  isActive
+                    ? "bg-blue-50 text-blue-700"
+                    : "text-gray-700 hover:bg-gray-100"
+                }`}
               >
                 <Icon className="w-5 h-5 mr-3" />
                 {item.name}
@@ -47,9 +65,7 @@ export default function GovernmentLayout({
           })}
         </nav>
       </aside>
-      <main className="flex-1 p-8 overflow-auto">
-        {children}
-      </main>
+      <main className="flex-1 p-8 overflow-auto">{children}</main>
     </div>
   );
 }

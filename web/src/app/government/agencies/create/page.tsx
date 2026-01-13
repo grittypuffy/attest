@@ -3,14 +3,24 @@
 import { api } from "@/lib/api";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useAccount, useSwitchChain, usePublicClient, useWalletClient } from "wagmi";
+import { encodeFunctionData, parseGwei, getAddress, hexToNumber } from "viem";
+import { ACTIVE_CHAIN_ID, ATTEST_MANAGER_ADDRESS } from "@/lib/constants";
+import AttestManagerABI from "@/abi/AttestManager.json";
 
 export default function CreateAgencyPage() {
   const router = useRouter();
+  const { chainId, address: userAddress } = useAccount();
+  const { switchChain } = useSwitchChain();
+  const publicClient = usePublicClient();
+  const { data: walletClient } = useWalletClient();
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: "",
     address: "",
+    walletAddress: "",
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -21,18 +31,79 @@ export default function CreateAgencyPage() {
     setError("");
 
     try {
-      const { data, error } = await api.government.agency.create.post(formData);
-
-      if (error) {
-        setError(error.value ? String(error.value) : "Failed to create agency");
-      } else if (data && data.success) {
-        router.push("/government");
-      } else {
-        setError(data?.message || "An unexpected error occurred");
+      // 0. Network & Contract Sync Check
+      if (chainId !== ACTIVE_CHAIN_ID) {
+        switchChain({ chainId: ACTIVE_CHAIN_ID });
+        return;
       }
-    } catch (err) {
+
+      if (!publicClient) throw new Error("Public client not initialized");
+      if (!walletClient) throw new Error("Wallet client not initialized");
+      if (!userAddress) throw new Error("User not connected");
+      
+      const code = await publicClient.getBytecode({ address: ATTEST_MANAGER_ADDRESS as `0x${string}` });
+      if (!code || code === "0x") {
+        console.warn("Contract desync detected on this RPC node. Proceeding with caution...");
+      }
+
+      // 1. Manually Encode Data
+      const encodedData = encodeFunctionData({
+        abi: AttestManagerABI,
+        functionName: "registerAgency",
+        args: [
+          getAddress(formData.walletAddress), 
+          JSON.stringify({ name: formData.name, physical_address: formData.address }), 
+        ],
+      });
+
+      // 2. Legacy Transaction (More stable for Shardeum/Inco)
+      const hash = await walletClient.sendTransaction({
+        account: userAddress,
+        to: ATTEST_MANAGER_ADDRESS as `0x${string}`,
+        data: encodedData,
+        // gas: BigInt(600000), 
+        // gasPrice: parseGwei("25"), 
+        chain: walletClient.chain,
+        kzg: undefined, // Fix for some viem versions
+      });
+
+      console.log("Transaction sent:", hash);
+
+      // 2. Database record - Using explicit fetch to debug NetworkError
+      const response = await fetch("/api/government/agency/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify(formData),
+      });
+
+      let data;
+      // let apiError = null; // Unused
+
+      if (response.ok) {
+        data = await response.json();
+      } else {
+         try {
+            const errData = await response.json();
+            // apiError = { value: errData.error || errData.message || "Request failed" };
+            setError(errData.message || "Request failed");
+         } catch (e) {
+            // apiError = { value: `Request failed with status ${response.status}` };
+            setError(`Request failed with status ${response.status}`);
+         }
+      }
+
+      if (data && data.success) {
+        router.push("/government");
+      } else if (!error) {
+         // If error wasn't set above but success is false
+         setError(data?.message || "An unexpected error occurred");
+      }
+    } catch (err: any) {
       console.error(err);
-      setError("Network error or invalid response");
+      setError(err.message || "Network error or invalid response");
     } finally {
       setLoading(false);
     }
@@ -40,12 +111,17 @@ export default function CreateAgencyPage() {
 
   return (
     <div className="max-w-6xl">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Register New Agency</h1>
+      <h1 className="text-2xl font-bold text-gray-900 mb-6">
+        Register New Agency
+      </h1>
 
       <div className="bg-white p-8 rounded-xl border border-gray-200 shadow-sm">
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="name"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Agency Name
             </label>
             <input
@@ -54,12 +130,17 @@ export default function CreateAgencyPage() {
               required
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
               value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, name: e.target.value })
+              }
             />
           </div>
 
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="email"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Email Address
             </label>
             <input
@@ -68,12 +149,37 @@ export default function CreateAgencyPage() {
               required
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
               value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, email: e.target.value })
+              }
             />
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="walletAddress"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Wallet Address (0x...)
+            </label>
+            <input
+              type="text"
+              id="walletAddress"
+              required
+              placeholder="0x..."
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none font-mono"
+              value={formData.walletAddress}
+              onChange={(e) =>
+                setFormData({ ...formData, walletAddress: e.target.value })
+              }
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor="password"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Initial Password
             </label>
             <input
@@ -82,13 +188,18 @@ export default function CreateAgencyPage() {
               required
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
               value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, password: e.target.value })
+              }
             />
           </div>
 
           <div>
-            <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">
-              Address
+            <label
+              htmlFor="address"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Physical Address
             </label>
             <textarea
               id="address"
@@ -96,7 +207,9 @@ export default function CreateAgencyPage() {
               rows={3}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
               value={formData.address}
-              onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, address: e.target.value })
+              }
             />
           </div>
 
