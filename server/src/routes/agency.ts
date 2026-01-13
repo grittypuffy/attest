@@ -69,3 +69,29 @@ export const getAgencyData = async ({
 		message: "User retrived successfully",
 	};
 };
+
+export const getAllAgenciesHandler = async ({ store }: any) => {
+	const userCollection: Collection = store.state.userCollection;
+	const agencies = await userCollection.find({ role: "Agency" }).toArray();
+
+	return {
+		success: true,
+		data: agencies.map((agency) => ({
+			id: agency._id.toString(),
+			name: agency.name,
+			email: agency.email,
+			address: agency.address,
+			walletAddress: agency.walletAddress,
+			// Add default values for UI if not in DB
+			rating: agency.rating || 4.5,
+			reviewCount: agency.reviewCount || 0,
+			isAccredited: agency.isAccredited ?? true,
+			specialization: agency.specialization || ["General Infrastructure"],
+			location: agency.location || "New Delhi",
+			completedProjects: agency.completedProjects || 0,
+			description: agency.description || "Verified government agency.",
+		})),
+		error: null,
+		message: "Agencies fetched successfully",
+	};
+};

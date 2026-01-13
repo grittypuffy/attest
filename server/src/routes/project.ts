@@ -36,19 +36,24 @@ export const createProjectHandler = async ({
 		const _result = await projectCollection.insertOne({
 			project_name: projectData.project_name,
 			description: projectData.description,
+			budget: projectData.budget || "0",
+			onchain_id: projectData.onchain_id, // Add this
 		});
 
 		return {
 			success: true,
 			data: {
-				project_name: projectData.name,
+				project_name: projectData.project_name,
 				project_id: _result.insertedId.toString(),
 				description: projectData.description,
+				budget: projectData.budget || "0",
+				onchain_id: projectData.onchain_id,
 			},
 			error: null,
-			message: "Agency created successfully",
+			message: "Project created successfully",
 		};
 	} catch (_e) {
+		console.error("Error in handler:", _e);
 		return {
 			error: "Invalid or expired token",
 			message: "Unauthorized",
@@ -79,6 +84,7 @@ export const getProjectHandler = async ({
 			project_name: result.project_name,
 			project_id: result._id.toString(),
 			description: result.description,
+			onchain_id: result.onchain_id,
 		},
 		error: null,
 		message: "Project fetched successfully",
@@ -95,6 +101,7 @@ export const getAllProjectsHandler = async ({ store }: any) => {
 			project_name: project.project_name,
 			project_id: project._id.toString(),
 			description: project.description,
+			onchain_id: project.onchain_id,
 		})),
 		error: null,
 		message: "Projects fetched successfully",
@@ -132,10 +139,16 @@ export const registerProjectProposalHandler = async ({
 			no_of_phases: projectProposalData.no_of_phases,
 			outcome: projectProposalData.outcome,
 			description: projectProposalData.description,
+			onchain_id: projectProposalData.onchain_id, // Add this
 			status: "Pending",
 		};
 		if (!proposalDoc?.summary) {
-			proposalDoc.summary = await generateSummary({store, params: {project_id}, proposalDoc});
+			try {
+				proposalDoc.summary = await generateSummary({store, params: {project_id}, proposalDoc});
+			} catch (summaryError) {
+				console.warn("Failed to generate summary:", summaryError);
+				proposalDoc.summary = (projectProposalData.description || "").slice(0, 200) + "...";
+			}
 		}
 		const result = await proposalCollection.insertOne(proposalDoc);
 		const data = {
@@ -143,21 +156,29 @@ export const registerProjectProposalHandler = async ({
 				...proposalDoc
 			};
 
-		return {
-			success: true,
-			data: data,
-			error: null,
-			message: "Agency created successfully",
-		};
-	} catch (_e) {
-		return {
-			error: "Invalid or expired token",
-			message: "Unauthorized",
-			data: null,
-			success: false,
-		};
-	}
-};
+		        return {
+		            success: true,
+		            data: data,
+		            error: null,
+		            message: "Agency created successfully",
+		        };
+		    	} catch (_e: any) {
+		    		console.error("registerProjectProposalHandler error:", _e);
+		    		if (_e.name === "JsonWebTokenError" || _e.name === "TokenExpiredError" || _e.message === "No token") {
+		    			return {
+		    				error: "Invalid or expired token",
+		    				message: "Unauthorized",
+		    				data: null,
+		    				success: false,
+		    			};
+		    		}
+		    		return {
+		    			error: _e.message || "Internal Server Error",
+		    			message: "Failed to register proposal",
+		    			data: null,
+		    			success: false,
+		    		};
+		    	}};
 
 export const registerProposalPhasesHandler = async ({
 	store,
@@ -212,6 +233,7 @@ export const registerProposalPhasesHandler = async ({
 			message: "Phases created successfully",
 		};
 	} catch (_e) {
+		console.error("Error in handler:", _e);
 		return {
 			error: "Invalid or expired token",
 			message: "Unauthorized",
@@ -248,6 +270,7 @@ export const getProjectProposalHandler = async ({
 		agency_id: proposal.agency_id.toString(),
 		proposal_id: _id.toString(),
 		project_id: proposal.project_id.toString(),
+		onchain_id: proposal.onchain_id,
 		phases: phases,
 	};
 
@@ -283,6 +306,7 @@ export const getProjectProposalsHandler = async ({
 				agency_id: proposal.agency_id.toString(),
 				proposal_id: _id.toString(),
 				project_id: proposal.project_id.toString(),
+				onchain_id: proposal.onchain_id,
 				phases: phases,
 			};
 		}),
@@ -295,6 +319,7 @@ export const getProjectProposalsHandler = async ({
 			agency_id: proposal.agency_id.toString(),
 			proposal_id: proposal.proposal_id,
 			project_id: proposal.project_id.toString(),
+			onchain_id: proposal.onchain_id,
 		})),
 		error: null,
 		message: "Proposals fetched successfully",
@@ -373,6 +398,7 @@ export const acceptProjectProposalHandler = async ({
 			},
 		};
 	} catch (_e) {
+		console.error("Error in handler:", _e);
 		return {
 			error: "Invalid or expired token",
 			message: "Unauthorized",
@@ -437,6 +463,7 @@ export const acceptProjectPhaseHandler = async ({
 			},
 		};
 	} catch (_e) {
+		console.error("Error in handler:", _e);
 		return {
 			error: "Invalid or expired token",
 			message: "Unauthorized",

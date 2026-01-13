@@ -3,6 +3,8 @@ import { t } from "elysia";
 export const CreateProjectRequest = t.Object({
 	project_name: t.String(),
 	description: t.String(),
+	budget: t.Optional(t.String()),
+	onchain_id: t.Optional(t.Number()),
 });
 
 export const CreateProjectProposalRequest = t.Object({
@@ -13,6 +15,7 @@ export const CreateProjectProposalRequest = t.Object({
 	summary: t.Optional(t.String()),
 	no_of_phases: t.Integer(),
 	outcome: t.String(),
+	onchain_id: t.Optional(t.Number()),
 });
 
 export const AcceptProjectProposalRequest = t.Object({

@@ -23,4 +23,5 @@ export interface Proposal {
     | "Not Accepted"
     | string;
   phases: any[];
+  onchain_id?: number;
 }

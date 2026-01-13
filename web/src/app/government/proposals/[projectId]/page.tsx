@@ -4,16 +4,21 @@ import { useState, useEffect, use } from "react";
 import { api } from "@/lib/api";
 import { CheckCircle, XCircle, Clock } from "@phosphor-icons/react/dist/ssr";
 import { useRouter } from "next/navigation";
+import { useAccount, useSwitchChain, useWalletClient } from "wagmi";
+import { encodeFunctionData, parseGwei } from "viem";
+import { ACTIVE_CHAIN_ID, ATTEST_MANAGER_ADDRESS } from "@/lib/constants";
+import AttestManagerABI from "@/abi/AttestManager.json";
 
 interface Proposal {
   proposal_id: string;
   proposal_name: string;
-  agency_id: string; // ID for now, maybe fetch agency name if possible
+  agency_id: string; 
   total_budget: number;
   timeline: string;
   summary?: string;
   description: string;
   status: string;
+  onchain_id?: number;
 }
 
 export default function ProjectProposalsPage({
@@ -21,7 +26,6 @@ export default function ProjectProposalsPage({
 }: {
   params: Promise<{ projectId: string }>;
 }) {
-  // Unwrap params using React.use()
   const { projectId } = use(params);
 
   const [proposals, setProposals] = useState<Proposal[]>([]);
@@ -29,13 +33,18 @@ export default function ProjectProposalsPage({
   const [processingId, setProcessingId] = useState<string | null>(null);
   const router = useRouter();
 
+  const { chainId, address: userAddress } = useAccount();
+  const { switchChain } = useSwitchChain();
+  const { data: walletClient } = useWalletClient();
+
   const fetchProposals = async () => {
     try {
       const { data, error } = await api
         .project({ project_id: projectId })
         .proposal.all.get();
-      if (data && !error && data.data) {
-        setProposals(data.data as any); // Type cast due to potential mismatch or missing types
+      if (data && !error && data.success) {
+        console.log("Fetched proposals:", data.data);
+        setProposals(data.data as any); 
       }
     } catch (err) {
       console.error("Failed to fetch proposals", err);
@@ -51,15 +60,51 @@ export default function ProjectProposalsPage({
   }, [projectId]);
 
   const handleApprove = async (proposalId: string) => {
+    if (!walletClient) {
+      alert("Please connect your wallet first");
+      return;
+    }
+
     if (
       !confirm(
-        "Are you sure you want to approve this proposal? This will reject all other proposals for this project.",
+        "Are you sure you want to approve this proposal? This will trigger an on-chain transaction and reject all other proposals.",
       )
     )
       return;
 
     setProcessingId(proposalId);
     try {
+      // 0. Network Sync
+      if (chainId !== ACTIVE_CHAIN_ID) {
+        switchChain({ chainId: ACTIVE_CHAIN_ID });
+        setProcessingId(null);
+        return;
+      }
+
+      // 1. On-Chain Approval
+      if (typeof proposals.find(p => p.proposal_id === proposalId)?.onchain_id === 'undefined') {
+        throw new Error("Proposal on-chain ID missing");
+      }
+      
+      const proposal = proposals.find(p => p.proposal_id === proposalId)!;
+
+      const encodedData = encodeFunctionData({
+        abi: AttestManagerABI,
+        functionName: "approveProposal",
+        args: [BigInt(proposal.onchain_id!)], 
+      });
+
+      const hash = await walletClient.sendTransaction({
+        account: userAddress,
+        to: ATTEST_MANAGER_ADDRESS as `0x${string}`,
+        data: encodedData,
+        chain: walletClient.chain,
+        kzg: undefined,
+      });
+
+      console.log("On-chain approval transaction sent:", hash);
+
+      // 2. Off-Chain Database Update
       const { data, error } = await api
         .project({ project_id: projectId })
         .proposal.accept.post({
@@ -67,17 +112,17 @@ export default function ProjectProposalsPage({
         });
 
       if (data && data.success) {
-        alert("Proposal approved successfully!");
-        fetchProposals(); // Refresh list to update statuses
+        alert("Proposal approved on-chain and off-chain successfully!");
+        fetchProposals(); 
       } else {
         alert(
-          "Failed to approve proposal: " +
+          "Blockchain transaction sent, but database update failed: " +
             (data?.message || error?.value || "Unknown error"),
         );
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert("An error occurred.");
+      alert(err.message || "An error occurred during approval.");
     } finally {
       setProcessingId(null);
     }

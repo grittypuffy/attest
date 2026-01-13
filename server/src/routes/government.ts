@@ -9,6 +9,9 @@ export const createAgencyHandler = async ({
 	cookie: { token },
 }: any) => {
 	try {
+		if (!token || !token.value) {
+			return { error: "Invalid or expired token" };
+		}
 		const decoded = jwt.verify(token.value, store.state.jwtSecret) as {
 			id: string;
 			email: string;
@@ -43,6 +46,7 @@ export const createAgencyHandler = async ({
 			password: passwordHash,
 			name: signUpData.name,
 			address: signUpData.address,
+			walletAddress: signUpData.walletAddress.toLowerCase(),
 			role: "Agency",
 		});
 
@@ -53,6 +57,7 @@ export const createAgencyHandler = async ({
 			message: "Agency created successfully",
 		};
 	} catch (_e) {
+		console.error("createAgencyHandler error:", _e);
 		return { error: "Invalid or expired token" };
 	}
 };

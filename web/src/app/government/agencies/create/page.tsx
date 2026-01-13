@@ -3,14 +3,24 @@
 import { api } from "@/lib/api";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useAccount, useSwitchChain, usePublicClient, useWalletClient } from "wagmi";
+import { encodeFunctionData, parseGwei, getAddress, hexToNumber } from "viem";
+import { ACTIVE_CHAIN_ID, ATTEST_MANAGER_ADDRESS } from "@/lib/constants";
+import AttestManagerABI from "@/abi/AttestManager.json";
 
 export default function CreateAgencyPage() {
   const router = useRouter();
+  const { chainId, address: userAddress } = useAccount();
+  const { switchChain } = useSwitchChain();
+  const publicClient = usePublicClient();
+  const { data: walletClient } = useWalletClient();
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: "",
     address: "",
+    walletAddress: "",
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -21,18 +31,79 @@ export default function CreateAgencyPage() {
     setError("");
 
     try {
-      const { data, error } = await api.government.agency.create.post(formData);
-
-      if (error) {
-        setError(error.value ? String(error.value) : "Failed to create agency");
-      } else if (data && data.success) {
-        router.push("/government");
-      } else {
-        setError(data?.message || "An unexpected error occurred");
+      // 0. Network & Contract Sync Check
+      if (chainId !== ACTIVE_CHAIN_ID) {
+        switchChain({ chainId: ACTIVE_CHAIN_ID });
+        return;
       }
-    } catch (err) {
+
+      if (!publicClient) throw new Error("Public client not initialized");
+      if (!walletClient) throw new Error("Wallet client not initialized");
+      if (!userAddress) throw new Error("User not connected");
+      
+      const code = await publicClient.getBytecode({ address: ATTEST_MANAGER_ADDRESS as `0x${string}` });
+      if (!code || code === "0x") {
+        console.warn("Contract desync detected on this RPC node. Proceeding with caution...");
+      }
+
+      // 1. Manually Encode Data
+      const encodedData = encodeFunctionData({
+        abi: AttestManagerABI,
+        functionName: "registerAgency",
+        args: [
+          getAddress(formData.walletAddress), 
+          JSON.stringify({ name: formData.name, physical_address: formData.address }), 
+        ],
+      });
+
+      // 2. Legacy Transaction (More stable for Shardeum/Inco)
+      const hash = await walletClient.sendTransaction({
+        account: userAddress,
+        to: ATTEST_MANAGER_ADDRESS as `0x${string}`,
+        data: encodedData,
+        // gas: BigInt(600000), 
+        // gasPrice: parseGwei("25"), 
+        chain: walletClient.chain,
+        kzg: undefined, // Fix for some viem versions
+      });
+
+      console.log("Transaction sent:", hash);
+
+      // 2. Database record - Using explicit fetch to debug NetworkError
+      const response = await fetch("/api/government/agency/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify(formData),
+      });
+
+      let data;
+      // let apiError = null; // Unused
+
+      if (response.ok) {
+        data = await response.json();
+      } else {
+         try {
+            const errData = await response.json();
+            // apiError = { value: errData.error || errData.message || "Request failed" };
+            setError(errData.message || "Request failed");
+         } catch (e) {
+            // apiError = { value: `Request failed with status ${response.status}` };
+            setError(`Request failed with status ${response.status}`);
+         }
+      }
+
+      if (data && data.success) {
+        router.push("/government");
+      } else if (!error) {
+         // If error wasn't set above but success is false
+         setError(data?.message || "An unexpected error occurred");
+      }
+    } catch (err: any) {
       console.error(err);
-      setError("Network error or invalid response");
+      setError(err.message || "Network error or invalid response");
     } finally {
       setLoading(false);
     }
@@ -86,6 +157,26 @@ export default function CreateAgencyPage() {
 
           <div>
             <label
+              htmlFor="walletAddress"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Wallet Address (0x...)
+            </label>
+            <input
+              type="text"
+              id="walletAddress"
+              required
+              placeholder="0x..."
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none font-mono"
+              value={formData.walletAddress}
+              onChange={(e) =>
+                setFormData({ ...formData, walletAddress: e.target.value })
+              }
+            />
+          </div>
+
+          <div>
+            <label
               htmlFor="password"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
@@ -108,7 +199,7 @@ export default function CreateAgencyPage() {
               htmlFor="address"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
-              Address
+              Physical Address
             </label>
             <textarea
               id="address"

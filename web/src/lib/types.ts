@@ -9,6 +9,7 @@ export type Project = {
   project_name: string;
   project_id: string;
   description: string;
+  onchain_id?: number;
 };
 
 export type Phase = {
