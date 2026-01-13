@@ -46,6 +46,7 @@ export const createAgencyHandler = async ({
 			password: passwordHash,
 			name: signUpData.name,
 			address: signUpData.address,
+			walletAddress: signUpData.walletAddress.toLowerCase(),
 			role: "Agency",
 		});
 

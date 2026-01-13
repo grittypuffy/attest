@@ -4,7 +4,6 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import { api } from "@/lib/api";
 import ConnectWallet from "./ConnectWallet";
-import ConnectWallet from "./ConnectWallet";
 
 export default function Navbar() {
   const pathname = usePathname();

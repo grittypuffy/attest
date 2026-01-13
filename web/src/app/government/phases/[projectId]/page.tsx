@@ -77,7 +77,7 @@ export default function ProjectPhasesPage({ params }: { params: Promise<{ projec
       // 1. On-Chain Transaction: verifyAndReleasePhase
       // Note: Contract function 'verifyAndReleasePhase' advance the currentPhaseIndex
       const encodedData = encodeFunctionData({
-        abi: AttestManagerABI.abi,
+        abi: AttestManagerABI,
         functionName: "verifyAndReleasePhase",
         args: [BigInt(acceptedProposal.proposal_id)],
       });

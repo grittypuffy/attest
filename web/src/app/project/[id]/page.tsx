@@ -73,7 +73,7 @@ export default function ProjectPage({
         }
 
         if (proposalsRes.data?.data) {
-          setProposals(proposalsRes.data.data);
+          setProposals(proposalsRes.data.data as any);
           // setProposals(PHASES);
           console.log("Fetched proposals:", proposalsRes.data.data);
         }
@@ -119,7 +119,7 @@ export default function ProjectPage({
   return (
     <ProjectDetails
       project={project}
-      proposals={proposals}
+      proposals={proposals || []}
       selectedProposal={selectedProposal}
       onSelectProposal={setSelectedProposal}
     />

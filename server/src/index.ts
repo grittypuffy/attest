@@ -13,9 +13,11 @@ import {
 import {
 	getAuthUserHandler,
 	getUserHandler,
+	requestNonceHandler,
 	signInHandler,
 	signOutHandler,
 	verifySessionHandler,
+	verifySignatureHandler,
 } from "./routes/auth";
 import { createAgencyHandler } from "./routes/government";
 import {
@@ -32,6 +34,7 @@ import {
 import {
 	getAgencyData,
 	getAgencyProjectProposalsHandler,
+	getAllAgenciesHandler,
 } from "./routes/agency";
 import { generateChatResponse } from "./routes/chat";
 import { ChatRequest } from "./models/chat";
@@ -91,6 +94,33 @@ const app = new Elysia()
 				},
 				{
 					body: SignInRequest,
+				},
+			)
+			.post(
+				"/request_nonce",
+				async ({ body }) => {
+					return await requestNonceHandler({ body });
+				},
+				{
+					body: t.Object({ address: t.String() }),
+				},
+			)
+			.post(
+				"/verify_signature",
+				async ({ store: { state }, body, cookie: { token }, set }) => {
+					return await verifySignatureHandler({
+						store: { state },
+						body,
+						cookie: { token },
+						set,
+					});
+				},
+				{
+					body: t.Object({
+						address: t.String(),
+						signature: t.String(),
+						nonce: t.String(),
+					}),
 				},
 			)
 			.get("/user", async ({ store: { state }, cookie: { token } }) => {
@@ -278,6 +308,9 @@ const app = new Elysia()
 	)
 	.group("/agency", (app) =>
 		app
+			.get("/all", async ({ store: { state } }) => {
+				return await getAllAgenciesHandler({ store: { state } });
+			})
 			.get(
 				"/:agency_id/proposals",
 				async ({ store, params: { agency_id } }) => {
