@@ -65,9 +65,30 @@ An agency is responsible for the following operations in the platform:
 
 ### Create proposals
 
-An agency can create proposals to multiple projects
+An agency can create proposals to multiple projects with information on:
+
+- Title
+- Budget
+- Timeline
+- Phases
+- Outcomes
+- Description
+
+A AI summary is automatically generated for the proposal for enhanced decision making by government ministries. This along with the credibility of agency is analyzed before choosing to approve a proposal by the ministries.
+
+Accepted proposal tracks for accrediting of the agency along with quality and milestones (phases) completed on time.
+
+### Phase creation
+
+Each proposal contains phases which need to be defined within a timeframe and specific budget and outcomes. Once a proposal is created, the phases will be created alongside. For an approved proposal, the funds will be released for the first phase and subsequent funds will be released only upon proof submission. This ensures transparency and proper fund utilization.
+
+### Proof submission
+
+The agencies can upload their proof of submission for a phase, which will then be validated by the government ministry administering the project. This will be used for further release in funds from the escrow.
 
 ## Users
+
+Users (unauthorized), can access information related to agencies, submitted proposal and phase information to track the transparency and accountability in fund transfer process.
 
 # Tech stack
 
@@ -92,6 +113,7 @@ The project uses the following technologies:
 - Foundry for smart contract development
 - Anvil for local testnet deployment using Docker Compose
 - Inco for smart contract development with confidentiality
+- Shardeum for deployment of smart contracts for transfering funds
 
 # Development
 
