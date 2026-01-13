@@ -12,6 +12,9 @@
   "dependencies": {
     "@editorjs/editorjs": "^2.31.1",
     "@editorjs/header": "^2.8.8",
+    "@editorjs/list": "^2.0.9",
+    "@editorjs/nested-list": "^1.4.3",
+    "@editorjs/paragraph": "^2.11.7",
     "@elysiajs/eden": "^1.4.6",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
