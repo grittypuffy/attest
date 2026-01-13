@@ -33,6 +33,7 @@ import {
   ListBullets,
   WarningCircle
 } from "@phosphor-icons/react";
+import { warn } from "console";
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 
@@ -50,19 +51,7 @@ const Editor = dynamic(() => import("@components/agency/ProposalEditor"), {
 
 export const toEditorDoc = (input: any) => {
   if (!input) return { time: Date.now(), blocks: [], version: "2.22.2" };
-
   if (typeof input === "object" && input.blocks) return input; // already EditorJS
-
-  return {
-    time: Date.now(),
-    version: "2.22.2",
-    blocks: [
-      {
-        type: "paragraph",
-        data: { text: String(input) },
-      },
-    ],
-  };
 };
 
 export default function AgencyProposalView() {
@@ -471,10 +460,9 @@ export default function AgencyProposalView() {
                 <Typography variant="h6" className="font-bold mb-4 text-gray-900">
                   Detailed Proposal Plan
                 </Typography>
-                <Box className="bg-white rounded-lg border border-gray-200 p-6"><Editor data={
-                  typeof selectedProposal.proposal_description === 'string'
-                    ? JSON.parse(selectedProposal.proposal_description)
-                    : selectedProposal.proposal_description
+                <Box className="bg-white rounded-lg border border-gray-200 p-6">
+                <Editor data={
+                  toEditorDoc(selectedProposal.proposal_description)
                 } />
                 </Box>
               </Box>
